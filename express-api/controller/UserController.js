@@ -26,9 +26,29 @@ const getUsers = async (req, res) => {
 const registerUser = async (req, res) => {
     const { name, email, password, confirmPassword } = req.body;
 
+    if (!name || !email || !password || !confirmPassword) return res.status(400).json(
+        {
+            status: "error",
+            message: "Please fill in all fields"
+        }
+    );
+
+    const emailExist = await Users.findOne({
+        where: {
+            email: email
+        }
+    });
+
+    if (emailExist) return res.status(400).json(
+        {
+            status: "error",
+            message: "Email already exists"
+        }
+    );
+
     if (password !== confirmPassword) return res.status(400).json(
         {
-            status: "failed",
+            status: "error",
             message: "Password and Confirm Password do not match"
         }
     );
@@ -57,6 +77,13 @@ const registerUser = async (req, res) => {
 }
 
 const loginUser = async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json(
+        {
+            status: "error",
+            message: "Please fill in all fields"
+        }
+    );
     try {
         const user = await Users.findOne({
             where: {
@@ -66,7 +93,7 @@ const loginUser = async (req, res) => {
 
         if (!user) return res.status(404).json(
             {
-                status: "failed",
+                status: "error",
                 message: "Email not found"
             }
         );
@@ -74,7 +101,7 @@ const loginUser = async (req, res) => {
         const match = await bcrypt.compare(req.body.password, user.password);
         if (!match) return res.status(400).json(
             {
-                status: "failed",
+                status: "error",
                 message: "Wrong password"
             }
         );
