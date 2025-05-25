@@ -1,10 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, NavLink } from 'react-router-dom';
 
 const Navbar = () => {
 
     const navigate = useNavigate();
+
+    const [isActive, setIsActive] = useState(false);
+
+    const activeStyle = {
+        fontWeight: "bold",
+        color: "yellow",
+    };
+
+    const toggleBurger = () => {
+        setIsActive(!isActive);
+    }
 
     const handleLogout = async () => {
         const result = await window.Swal.fire({
@@ -68,18 +79,36 @@ const Navbar = () => {
                         </svg>
                     </a>
 
-                    <a href='/' role="button" className={`navbar-burger burger`} aria-label="menu" data-target="navbarBasicExample">
+                    <button
+                        className={`navbar-burger burger ${isActive ? 'is-active' : ''}`}
+                        aria-label="menu"
+                        aria-expanded={isActive ? "true" : "false"}
+                        onClick={toggleBurger}
+                    >
                         <span aria-hidden="true"></span>
                         <span aria-hidden="true"></span>
                         <span aria-hidden="true"></span>
-                    </a>
+                    </button>
                 </div>
 
-                <div id="navbarBasicExample" className={`navbar-menu`}>
+                <div id="navbarBasicExample" className={`navbar-menu ${isActive ? 'is-active' : ''}`}>
                     <div className="navbar-start">
-                        <a href='/' className="navbar-item">
-                            Home
-                        </a>
+                        <NavLink
+                            to="/dashboard"
+                            className="navbar-item"
+                            style={({ isActive }) => (isActive ? activeStyle : undefined)}
+                            onClick={() => setIsActive(false)}
+                        >
+                            Dashboard
+                        </NavLink>
+                        <NavLink
+                            to="/profile"
+                            className="navbar-item"
+                            style={({ isActive }) => (isActive ? activeStyle : undefined)}
+                            onClick={() => setIsActive(false)}
+                        >
+                            Profile
+                        </NavLink>
                     </div>
 
                     <div className="navbar-end">

@@ -4,6 +4,7 @@ import Register from "./components/Register";
 import Dashboard from "./components/Dashboard";
 import Navbar from "./components/Navbar";
 import AuthGuard from "./components/AuthGuard ";
+import Profile from "./components/Profile";
 
 function App() {
   return (
@@ -19,6 +20,13 @@ function App() {
               <Dashboard />
             </>
           } />
+
+        <Route path="/profile" element={
+          <>
+            <Navbar />
+            <Profile />
+          </>
+        } />
       </Routes>
     </BrowserRouter>
   );

@@ -10,11 +10,6 @@ const Dashboard = () => {
     const [users, setUsers] = useState([])
     const navigate = useNavigate()
 
-    useEffect(() => {
-        refreshToken();
-        getUsers();
-    }, []);
-
     const refreshToken = async () => {
         try {
             const response = await axios.get('http://localhost:5000/api/auth/token');
@@ -24,13 +19,12 @@ const Dashboard = () => {
 
             setName(decoded.name);
             setExpired(decoded.exp);
-
         } catch (error) {
             if (error.response) {
                 navigate('/');
             }
         }
-    }
+    };
 
     const axiosJwt = axios.create();
 
@@ -56,10 +50,13 @@ const Dashboard = () => {
                 Authorization: `Bearer ${token}`
             }
         });
-
         setUsers(response.data.data);
+    }; // axiosJwt is a new instance per render, you might need to handle it too
 
-    }
+    useEffect(() => {
+        refreshToken();
+        getUsers();
+    }, []);
 
     return (
         <div className='container mt-5'>
