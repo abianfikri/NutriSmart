@@ -1,13 +1,13 @@
 import express from 'express';
-import userController from '../controller/UserController.js';
+import authController from '../controller/AuthController.js';
 import { refreshToken } from '../controller/RefreshTokenController.js';
 
 const router = express.Router();
 
 router.get('/token', refreshToken);
-router.post('/login', userController.loginUser);
-router.post('/register', userController.registerUser);
-router.delete('/logout', userController.logoutUser);
+router.post('/login', authController.loginUser);
+router.post('/register', authController.registerUser);
+router.delete('/logout', authController.logoutUser);
 
 
 export default router;
