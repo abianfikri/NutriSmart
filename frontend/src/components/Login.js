@@ -37,45 +37,58 @@ const Login = () => {
     }
 
     return (
-        <section className="hero has-background-grey-light is-fullheight is-fullwidth">
-            <div className="hero-body">
-                <div className="container">
-                    <div className="columns is-centered">
-                        <div className="column is-4-desktop">
-                            <form onSubmit={handleLogin} className='box'>
-                                {/* Username or Email */}
-                                <div className="field mt-5">
-                                    <label className="label">Email or Username</label>
-                                    <div className="controls">
-                                        <input type="text" className='input' placeholder='Email or Username' onChange={(e) => setEmail(e.target.value)} />
+        <div className="min-vh-100 d-flex align-items-center bg-light">
+            <div className="container">
+                <div className="row justify-content-center">
+                    <div className="col-md-6 col-lg-4">
+                        <div className="card shadow">
+                            <div className="card-body">
+                                <h3 className="card-title text-center mb-4">Login</h3>
+                                <form onSubmit={handleLogin}>
+                                    {/* Email or Username */}
+                                    <div className="mb-3">
+                                        <label htmlFor="email" className="form-label">Email or Username</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            id="email"
+                                            placeholder="Email or Username"
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            required
+                                        />
                                     </div>
-                                </div>
 
-                                {/* Password */}
-                                <div className="field mt-5">
-                                    <label className="label">Password</label>
-                                    <div className="controls">
-                                        <input type="password" className='input' placeholder='*******' onChange={(e) => setPassword(e.target.value)} />
+                                    {/* Password */}
+                                    <div className="mb-3">
+                                        <label htmlFor="password" className="form-label">Password</label>
+                                        <input
+                                            type="password"
+                                            className="form-control"
+                                            id="password"
+                                            placeholder="*******"
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            required
+                                        />
                                     </div>
-                                </div>
 
-                                {/* Button */}
-                                <div className="field mt-5">
-                                    <div className="control">
-                                        <button className='button is-success is-fullwidth'>Login</button>
+                                    {/* Button */}
+                                    <div className="d-grid mb-3">
+                                        <button type="submit" className="btn btn-success">Login</button>
                                     </div>
-                                </div>
 
-                                {/* Link ke Register */}
-                                <div className="has-text-centered mt-4">
-                                    <p>Belum punya akun? <Link to="/register" className="has-text-link">Daftar di sini</Link></p>
-                                </div>
-                            </form>
+                                    {/* Link ke Register */}
+                                    <div className="text-center">
+                                        <p className="mb-0">
+                                            Belum punya akun? <Link to="/register" className="text-decoration-none text-primary">Daftar di sini</Link>
+                                        </p>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
     )
 }
 

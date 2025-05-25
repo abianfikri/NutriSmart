@@ -15,22 +15,21 @@ const Register = () => {
 
         try {
             await axios.post('http://localhost:5000/api/auth/register', {
-                name: name,
-                email: email,
-                password: password,
-                confirmPassword: confirmPassword
-            });
+                name,
+                email,
+                password,
+                confirmPassword
+            })
 
             window.Swal.fire({
                 icon: 'success',
                 title: 'Berhasil',
-                text: 'Akun berhasil dibuat, silahkan login',
+                text: 'Akun berhasil dibuat, silakan login',
                 confirmButtonText: 'OK',
                 confirmButtonColor: '#3085d6',
             }).then(() => {
                 navigate('/')
-            });
-
+            })
         } catch (error) {
             window.Swal.fire({
                 icon: 'error',
@@ -41,61 +40,88 @@ const Register = () => {
     }
 
     return (
-        <section className="hero has-background-grey-light is-fullheight is-fullwidth">
-            <div className="hero-body">
-                <div className="container">
-                    <div className="columns is-centered">
-                        <div className="column is-4-desktop">
-                            <form onSubmit={handleRegister} className='box'>
-                                {/* Name*/}
-                                <div className="field mt-5">
-                                    <label className="label">Name</label>
-                                    <div className="controls">
-                                        <input type="text" className='input' placeholder='Name' value={name} onChange={(e) => setName(e.target.value)} />
+        <div className="min-vh-100 d-flex align-items-center bg-light">
+            <div className="container">
+                <div className="row justify-content-center">
+                    <div className="col-md-6 col-lg-4">
+                        <div className="card shadow">
+                            <div className="card-body">
+                                <h3 className="card-title text-center mb-4">Register</h3>
+                                <form onSubmit={handleRegister}>
+                                    {/* Name */}
+                                    <div className="mb-3">
+                                        <label htmlFor="name" className="form-label">Name</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            id="name"
+                                            placeholder="Name"
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                            required
+                                        />
                                     </div>
-                                </div>
 
-                                {/* Email*/}
-                                <div className="field mt-5">
-                                    <label className="label">Email</label>
-                                    <div className="controls">
-                                        <input type="text" className='input' placeholder='Email' value={email} onChange={(e) => setEmail(e.target.value)} />
+                                    {/* Email */}
+                                    <div className="mb-3">
+                                        <label htmlFor="email" className="form-label">Email</label>
+                                        <input
+                                            type="email"
+                                            className="form-control"
+                                            id="email"
+                                            placeholder="Email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            required
+                                        />
                                     </div>
-                                </div>
 
-                                {/* Password */}
-                                <div className="field mt-5">
-                                    <label className="label">Password</label>
-                                    <div className="controls">
-                                        <input type="password" className='input' placeholder='*******' value={password} onChange={(e) => setPassword(e.target.value)} />
+                                    {/* Password */}
+                                    <div className="mb-3">
+                                        <label htmlFor="password" className="form-label">Password</label>
+                                        <input
+                                            type="password"
+                                            className="form-control"
+                                            id="password"
+                                            placeholder="*******"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            required
+                                        />
                                     </div>
-                                </div>
 
-                                {/* Confirm Password */}
-                                <div className="field mt-5">
-                                    <label className="label">Confirm Password</label>
-                                    <div className="controls">
-                                        <input type="password" className='input' placeholder='*******' value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                                    {/* Confirm Password */}
+                                    <div className="mb-3">
+                                        <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
+                                        <input
+                                            type="password"
+                                            className="form-control"
+                                            id="confirmPassword"
+                                            placeholder="*******"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            required
+                                        />
                                     </div>
-                                </div>
 
-                                {/* Button */}
-                                <div className="field mt-5">
-                                    <div className="control">
-                                        <button className='button is-success is-fullwidth'>Register</button>
+                                    {/* Submit Button */}
+                                    <div className="d-grid mb-3">
+                                        <button type="submit" className="btn btn-primary">Register</button>
                                     </div>
-                                </div>
 
-                                {/* Link ke Login */}
-                                <div className="has-text-centered mt-4">
-                                    <p>Sudah punya akun? <Link to="/" className="has-text-link">Login di sini</Link></p>
-                                </div>
-                            </form>
+                                    {/* Link ke Login */}
+                                    <div className="text-center">
+                                        <p className="mb-0">
+                                            Sudah punya akun? <Link to="/" className="text-decoration-none text-primary">Login di sini</Link>
+                                        </p>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
     )
 }
 

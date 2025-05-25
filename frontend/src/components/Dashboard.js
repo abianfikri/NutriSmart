@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react'
-import axios from 'axios'
-import { useNavigate } from 'react-router-dom'
-import { jwtDecode } from 'jwt-decode'
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
 
 const Dashboard = () => {
-    const [name, setName] = useState('')
-    const [token, setToken] = useState('')
-    const [expired, setExpired] = useState('')
-    const [users, setUsers] = useState([])
-    const navigate = useNavigate()
+    const [name, setName] = useState('');
+    const [token, setToken] = useState('');
+    const [expired, setExpired] = useState('');
+    const [users, setUsers] = useState([]);
+    const navigate = useNavigate();
 
     const refreshToken = async () => {
         try {
@@ -16,7 +16,6 @@ const Dashboard = () => {
             setToken(response.data.accessToken);
 
             const decoded = jwtDecode(response.data.accessToken);
-
             setName(decoded.name);
             setExpired(decoded.exp);
         } catch (error) {
@@ -51,7 +50,7 @@ const Dashboard = () => {
             }
         });
         setUsers(response.data.data);
-    }; // axiosJwt is a new instance per render, you might need to handle it too
+    };
 
     useEffect(() => {
         refreshToken();
@@ -59,30 +58,32 @@ const Dashboard = () => {
     }, []);
 
     return (
-        <div className='container mt-5'>
-            <h1>Welcome Back: {name}</h1>
-            <button onClick={getUsers} className='button is-info'> Get Users</button>
+        <div className="container mt-5">
+            <h1 className="mb-4">Welcome Back: {name}</h1>
+            <button onClick={getUsers} className="btn btn-primary mb-4">Get Users</button>
 
-            <table className='table is-striped is-hoverable is-fullwidth mt-5'>
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {users.map((user, index) => (
-                        <tr key={user.id}>
-                            <td>{index + 1}</td>
-                            <td>{user.name}</td>
-                            <td>{user.email}</td>
+            <div className="table-responsive">
+                <table className="table table-striped table-hover">
+                    <thead className="table-light">
+                        <tr>
+                            <th scope="col">No</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">Email</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {users.map((user, index) => (
+                            <tr key={user.id}>
+                                <th scope="row">{index + 1}</th>
+                                <td>{user.name}</td>
+                                <td>{user.email}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
-    )
-}
+    );
+};
 
-export default Dashboard
+export default Dashboard;
