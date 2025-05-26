@@ -17,6 +17,26 @@ const Users = db.define('users', {
     refresh_token: {
         type: DataTypes.TEXT,
     },
+    gender: {
+        type: DataTypes.ENUM('L', 'P'),
+        allowNull: false,
+        defaultValue: () => {
+            // random gender antara 'L' atau 'P'
+            return Math.random() < 0.5 ? 'L' : 'P';
+        }
+    },
+    age: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+    },
+    weight: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+    },
+    height: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+    },
 }, {
     freezeTableName: true,
 });
