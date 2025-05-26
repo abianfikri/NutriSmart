@@ -4,7 +4,7 @@ import Register from "./components/Register";
 import Dashboard from "./components/Dashboard";
 import Navbar from "./components/Navbar";
 import AuthGuard from "./components/AuthGuard ";
-import Profile from "./components/Profile";
+import Profile from "./views/Profile";
 
 function App() {
   return (

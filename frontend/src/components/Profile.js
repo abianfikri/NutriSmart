@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
@@ -24,9 +24,6 @@ const Profile = () => {
             setToken(response.data.accessToken);
 
             const decoded = jwtDecode(response.data.accessToken);
-            console.log(decoded);
-
-
             setName(decoded.name);
             setExpired(decoded.exp);
         } catch (error) {
@@ -68,11 +65,7 @@ const Profile = () => {
             setAge(user.age);
             setWeight(user.weight);
             setHeight(user.height);
-            if (user.gender === "L") {
-                setGender("Laki-laki");
-            } else {
-                setGender("Perempuan");
-            }
+            setGender(user.gender); // <-- perbaikan di sini
         } catch (error) {
             console.error("Failed to fetch profile", error);
         }
@@ -81,25 +74,58 @@ const Profile = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axiosJwt.patch('http://localhost:5000/api/users/me', {
+            const response = await axiosJwt.patch('http://localhost:5000/api/users/me', {
                 name,
-                email
+                email,
+                gender
             }, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
             });
 
-            await refreshToken();
-            alert("Profil berhasil diperbarui");
-            setEditMode(false); // Kembali non-edit mode
-            setActiveTab("profile"); // Opsional: kembali ke tab profil
+            if (response.data.status === "success") {
+                await refreshToken()
+
+                window.Swal.fire({
+                    icon: "success",
+                    title: "Berhasil",
+                    text: response.data.message,
+                    confirmButtonText: "OK",
+                    confirmButtonColor: '#3085d6',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        setEditMode(false);
+                        setActiveTab("profile");
+                    }
+                });
+            } else {
+                window.Swal.fire({
+                    icon: "error",
+                    title: "Gagal",
+                    text: response.data.message,
+                    confirmButtonText: "OK",
+                    confirmButtonColor: '#3085d6',
+                });
+            }
+
         } catch (error) {
             console.error("Gagal update profil", error);
-            alert("Gagal update profil");
+            window.Swal.fire({
+                icon: "error",
+                title: "Gagal",
+                text: "Terjadi kesalahan saat mengupdate profil.",
+                confirmButtonText: "OK",
+                confirmButtonColor: '#3085d6',
+            });
         }
     };
 
+    const getGenderLabel = (code) => {
+        if (code === "L") return "Laki-laki";
+        if (code === "P") return "Perempuan";
+        return "-";
+    };
 
     useEffect(() => {
         const init = async () => {
@@ -147,7 +173,7 @@ const Profile = () => {
                                             </tr>
                                             <tr>
                                                 <th style={{ width: '55%' }}>Jenis Kelamin</th>
-                                                <td>: {gender}</td>
+                                                <td>: {getGenderLabel(gender)}</td>
                                             </tr>
                                         </thead>
                                     </table>
@@ -176,51 +202,129 @@ const Profile = () => {
                         </>
                     )}
 
-
                     {activeTab === 'edit' && (
-                        <div className="card p-3">
-                            <h3>Edit Profile</h3>
-                            <form onSubmit={handleSubmit}>
-                                <div className="mb-3">
-                                    <label>Nama</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        disabled={!editMode}
-                                    />
-                                </div>
-                                <div className="mb-3">
-                                    <label>Email</label>
-                                    <input
-                                        type="email"
-                                        className="form-control"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        disabled={!editMode}
-                                    />
-                                </div>
-
-                                {!editMode ? (
-                                    <button type="button" className="btn btn-warning" onClick={() => setEditMode(true)}>
-                                        Edit Data
-                                    </button>
-                                ) : (
-                                    <div>
-                                        <button type="submit" className="btn btn-primary me-2">Simpan</button>
-                                        <button type="button" className="btn btn-secondary" onClick={() => setEditMode(false)}>
-                                            Batal
-                                        </button>
+                        <div className="card shadow-sm"> {/* Menambahkan shadow untuk efek modern */}
+                            <div className="card-body p-4"> {/* Menambahkan padding lebih */}
+                                <form onSubmit={handleSubmit}>
+                                    <h4 className="mb-3 text-muted">Informasi Dasar</h4>
+                                    <div className="form-floating mb-3">
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            id="floatingName"
+                                            placeholder="Masukkan nama Anda"
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                            disabled={!editMode}
+                                        />
+                                        <label htmlFor="floatingName">Nama</label>
                                     </div>
-                                )}
-                            </form>
+
+                                    <div className="form-floating mb-3">
+                                        <input
+                                            type="email"
+                                            className="form-control"
+                                            id="floatingEmail"
+                                            placeholder="Masukkan email Anda"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            disabled={!editMode}
+                                        />
+                                        <label htmlFor="floatingEmail">Email</label>
+                                    </div>
+
+                                    <div className="mb-3"> {/* Untuk select, form-floating kurang ideal, jadi tetap standar */}
+                                        <label htmlFor="gender" className="form-label">Jenis Kelamin</label>
+                                        <select
+                                            id="gender"
+                                            className='form-select'
+                                            value={gender}
+                                            onChange={(e) => setGender(e.target.value)}
+                                            disabled={!editMode}
+                                        >
+                                            <option value="" disabled>-- Pilih Jenis Kelamin --</option>
+                                            <option value="L">Laki-Laki</option>
+                                            <option value="P">Perempuan</option>
+                                        </select>
+                                    </div>
+
+                                    <hr className="my-4" /> {/* Pemisah visual */}
+
+                                    <h4 className="mb-3 text-muted">Data Fisik</h4>
+                                    <div className="row">
+                                        <div className="col-md-4">
+                                            <div className="form-floating mb-3">
+                                                <input
+                                                    type="number"
+                                                    className="form-control"
+                                                    id="floatingAge"
+                                                    placeholder="Masukkan umur Anda"
+                                                    value={age}
+                                                    onChange={(e) => setAge(e.target.value)}
+                                                    disabled={!editMode}
+                                                />
+                                                <label htmlFor="floatingAge">Umur (Tahun)</label>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-4">
+                                            <div className="form-floating mb-3">
+                                                <input
+                                                    type="number"
+                                                    className="form-control"
+                                                    id="floatingWeight"
+                                                    placeholder="Masukkan berat badan Anda"
+                                                    value={weight}
+                                                    onChange={(e) => setWeight(e.target.value)}
+                                                    disabled={!editMode}
+                                                />
+                                                <label htmlFor="floatingWeight">Berat Badan (Kg)</label>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-4">
+                                            <div className="form-floating mb-3">
+                                                <input
+                                                    type="number"
+                                                    className="form-control"
+                                                    id="floatingHeight"
+                                                    placeholder="Masukkan tinggi badan Anda"
+                                                    value={height}
+                                                    onChange={(e) => setHeight(e.target.value)}
+                                                    disabled={!editMode}
+                                                />
+                                                <label htmlFor="floatingHeight">Tinggi Badan (cm)</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4"> {/* Margin atas untuk tombol */}
+                                        {!editMode ? (
+                                            <button type="button" className="btn btn-primary w-100" onClick={() => setEditMode(true)}>
+                                                <i className="bi bi-pencil-square me-2"></i>Edit Data {/* Contoh ikon jika menggunakan Bootstrap Icons */}
+                                            </button>
+                                        ) : (
+                                            <div className="d-grid gap-2 d-md-flex justify-content-md-end">
+                                                <button type="submit" className="btn btn-success me-md-2">
+                                                    <i className="bi bi-check-circle me-2"></i>Simpan Perubahan
+                                                </button>
+                                                <button type="button" className="btn btn-secondary" onClick={() => {
+                                                    setEditMode(false);
+                                                    // Optional: Reset form to original values if needed
+                                                    getProfile(); // Re-fetch profile to discard unsaved changes
+                                                }}>
+                                                    <i className="bi bi-x-circle me-2"></i>Batal
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     )}
+
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default Profile
+export default Profile;

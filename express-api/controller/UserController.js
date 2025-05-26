@@ -58,27 +58,34 @@ const updateProfile = async (req, res) => {
     try {
         const user = await Users.findByPk(req.userId);
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(404).json(
+                {
+                    status: "error",
+                    message: "User not found"
+                }
+            );
         }
 
-        const { name, email } = req.body;
+        const { name, email, gender, age, weight, height } = req.body;
         user.name = name;
         user.email = email;
+        user.gender = gender;
+        user.age = age;
+        user.weight = weight;
+        user.height = height;
 
         await user.save();
 
         res.status(200).json({
             status: "success",
-            message: "Profile updated successfully",
+            message: `Profile ${user.name} updated successfully`,
             data: {
                 id: user.id,
-                name: user.name,
-                email: user.email
             }
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: "Something went wrong" });
+        res.status(500).json({ status: "error", message: "Something went wrong" });
     }
 };
 
