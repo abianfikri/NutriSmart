@@ -3,12 +3,20 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 const registerUser = async (req, res) => {
-    const { name, email, password, confirmPassword } = req.body;
+    const { name, email, password, confirmPassword, gender, age, weight, height } = req.body;
 
-    if (!name || !email || !password || !confirmPassword) return res.status(400).json(
+    if (!name || !email || !password || !confirmPassword, !gender, !age, !weight, !height) return res.status(400).json(
         {
             status: "error",
             message: "Please fill in all fields"
+        }
+    );
+
+    // age harus berupa angka
+    if (isNaN(age) || isNaN(weight) || isNaN(height)) return res.status(400).json(
+        {
+            status: "error",
+            message: "Age must be a number"
         }
     );
 
@@ -39,7 +47,11 @@ const registerUser = async (req, res) => {
         await Users.create({
             name: name,
             email: email,
-            password: hashedPassword
+            password: hashedPassword,
+            gender: gender,
+            age: age,
+            weight: weight,
+            height: height
         });
 
         res.status(201).json(
