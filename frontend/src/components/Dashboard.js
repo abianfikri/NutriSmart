@@ -7,7 +7,6 @@ const Dashboard = () => {
     const [name, setName] = useState('');
     const [token, setToken] = useState('');
     const [expired, setExpired] = useState('');
-    const [users, setUsers] = useState([]);
     const navigate = useNavigate();
 
     const refreshToken = async () => {
@@ -43,45 +42,13 @@ const Dashboard = () => {
         return Promise.reject(error);
     });
 
-    const getUsers = async () => {
-        const response = await axiosJwt.get('http://localhost:5000/api/users', {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
-        setUsers(response.data.data);
-    };
-
     useEffect(() => {
         refreshToken();
-        getUsers();
     }, []);
 
     return (
         <div className="container mt-5">
             <h1 className="mb-4">Welcome Back: {name}</h1>
-            <button onClick={getUsers} className="btn btn-primary mb-4">Get Users</button>
-
-            <div className="table-responsive">
-                <table className="table table-striped table-hover">
-                    <thead className="table-light">
-                        <tr>
-                            <th scope="col">No</th>
-                            <th scope="col">Name</th>
-                            <th scope="col">Email</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {users.map((user, index) => (
-                            <tr key={user.id}>
-                                <th scope="row">{index + 1}</th>
-                                <td>{user.name}</td>
-                                <td>{user.email}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
         </div>
     );
 };
