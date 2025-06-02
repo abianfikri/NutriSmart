@@ -8,12 +8,17 @@ import router from './routes/api.js';
 dotenv.config();
 const app = express();
 
-try {
-    await db.authenticate();
-    console.log('Database Connected...');
-} catch (error) {
-    console.error(error);
-}
+
+const connectToDatabase = async () => {
+    try {
+        await db.authenticate();
+        console.log('Database Connected...');
+    } catch (error) {
+        console.error('Database connection failed:', error);
+    }
+};
+
+connectToDatabase();
 
 const allowedOrigins = ['http://localhost:3000'];
 
