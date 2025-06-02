@@ -1,7 +1,5 @@
 import axios from 'axios';
 import { uploadImageToFirebase } from '../helper/FirebaseUpload.js';
-import Meals from '../models/MealModel.js';
-import MealItems from '../models/MealItemModel.js';
 
 export async function generateMealPlan(calories = 2000, timeFrame = 2) {
     const url = `https://api.edamam.com/api/meal-planner/v1/${process.env.EDAMAM_APP_ID}/select`;
@@ -127,28 +125,4 @@ function fallbackMeal() {
         carbs: 0,
         servings: 0
     };
-}
-
-export async function saveMealPlanToDb(mealPlan, userId) {
-    for (const day of mealPlan) {
-        const meal = await Meals.create({
-            userId,
-            day: day.day,
-        });
-
-        for (const mealType of ['Breakfast', 'Lunch', 'Dinner']) {
-            const item = day.meals[mealType];
-            await MealItems.create({
-                mealId: meal.id,
-                mealType,
-                label: item.label,
-                imageUrl: item.image, // filename / URL yang sudah dari Firebase
-                calories: item.calories,
-                protein: item.protein,
-                fat: item.fat,
-                carbs: item.carbs,
-                servings: item.servings,
-            });
-        }
-    }
 }

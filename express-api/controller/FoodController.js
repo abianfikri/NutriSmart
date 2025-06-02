@@ -1,4 +1,5 @@
-import { generateMealPlan, saveMealPlanToDb } from "../service/EdamamService.js";
+import { generateMealPlan } from "../service/EdamamService.js";
+import { saveMealPlanToDb } from "../service/MealPlanService.js";
 import Users from "../models/UserModel.js";
 
 const getMealPlan = async (req, res) => {
