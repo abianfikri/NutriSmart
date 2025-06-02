@@ -19,6 +19,8 @@ const Profile = () => {
     const [weight, setWeight] = useState('');
     const [height, setHeight] = useState('');
     const [gender, setGender] = useState('');
+    const [activityLevel, setActivityLevel] = useState('');
+    const [calorieAnalysisData, setCalorieAnalysisData] = useState([]);
     const [editMode, setEditMode] = useState(false); // Awalnya, form tidak dalam mode edit
 
     const [token, setToken] = useState('');
@@ -81,6 +83,7 @@ const Profile = () => {
                 const response = await axiosJwt.get("http://localhost:5000/api/users/me", {
                     headers: { Authorization: `Bearer ${refreshedToken}` }
                 });
+
                 const user = response.data.data;
                 setName(user.name || '');
                 setEmail(user.email || '');
@@ -88,6 +91,17 @@ const Profile = () => {
                 setWeight(user.weight || '');
                 setHeight(user.height || '');
                 setGender(user.gender || '');
+                setActivityLevel(user.activityLevel || '');
+
+                // Analisis TDDE 
+                const responseAnalysis = await axiosJwt.get("http://localhost:5000/api/users/analysis", {
+                    headers: {
+                        Authorization: `Bearer ${refreshedToken}`
+                    }
+                });
+
+                const analysisData = responseAnalysis.data.data;
+                setCalorieAnalysisData(analysisData);
             } catch (error) {
                 console.error("Failed to fetch profile after attempting refresh", error);
                 navigate('/');
@@ -108,29 +122,19 @@ const Profile = () => {
             setWeight(user.weight || '');
             setHeight(user.height || '');
             setGender(user.gender || '');
+            setActivityLevel(user.activityLevel || '');
+
+            // Analisis TDDE
+            const responseAnalysis = await axiosJwt.get("http://localhost:5000/api/users/analysis", {
+                headers: {
+                    Authorization: `Bearer ${tokenToUse}`
+                }
+            });
+            const analysisData = responseAnalysis.data.data;
+            setCalorieAnalysisData(analysisData);
         } catch (error) {
             console.error("Failed to fetch profile", error);
-            if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-                // Jika unauthorized, coba refresh token sekali lagi atau navigasi
-                try {
-                    const refreshedTokenOnFail = await refreshToken();
-                    // Coba lagi getProfile dengan token baru
-                    const retryResponse = await axiosJwt.get("http://localhost:5000/api/users/me", {
-                        headers: { Authorization: `Bearer ${refreshedTokenOnFail}` }
-                    });
-                    const user = retryResponse.data.data;
-                    setName(user.name || '');
-                    setEmail(user.email || '');
-                    setAge(user.age || '');
-                    setWeight(user.weight || '');
-                    setHeight(user.height || '');
-                    setGender(user.gender || '');
-
-                } catch (refreshError) {
-                    console.error("Failed to fetch profile even after token refresh:", refreshError);
-                    navigate('/');
-                }
-            }
+            navigate('/');
         }
     };
 
@@ -145,6 +149,7 @@ const Profile = () => {
                 age: age ? parseInt(age) : null, // Pastikan age, weight, height dikirim sebagai number jika ada
                 weight: weight ? parseFloat(weight) : null,
                 height: height ? parseFloat(height) : null,
+                activityLevel,
             }, {
                 // Header Authorization akan ditambahkan oleh interceptor
                 headers: {
@@ -233,6 +238,7 @@ const Profile = () => {
                                 age={age}
                                 weight={weight}
                                 height={height}
+                                tddeInfo={calorieAnalysisData}
                             />
                         )}
 
@@ -245,6 +251,7 @@ const Profile = () => {
                                 weight={weight} setWeight={setWeight}
                                 height={height} setHeight={setHeight}
                                 gender={gender} setGender={setGender}
+                                activityLevel={activityLevel} setActivityLevel={setActivityLevel}
                                 editMode={editMode}
                                 setEditMode={setEditMode}
                                 handleSubmit={handleSubmit}

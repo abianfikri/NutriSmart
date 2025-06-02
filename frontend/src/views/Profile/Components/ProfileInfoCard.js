@@ -13,7 +13,7 @@ const getGenderLabel = (code) => {
     return "-";
 };
 
-const ProfileInfoCard = ({ name, email, gender, age, weight, height }) => {
+const ProfileInfoCard = ({ name, email, gender, age, weight, height, tddeInfo }) => {
     return (
         <motion.div
             initial="hidden"
@@ -62,6 +62,35 @@ const ProfileInfoCard = ({ name, email, gender, age, weight, height }) => {
                         <h6>Tinggi Badan</h6>
                         <p className="fs-4">{height || '-'} cm</p>
                     </div>
+                </div>
+            </div>
+
+            {/* Card Analisis Kebutuhan Kalori */}
+            <div className="card mb-3 shadow-sm">
+                <div className="card-header bg-light">
+                    Analisis Kebutuhan Kalori
+                </div>
+                <div className="card-body">
+                    {tddeInfo && tddeInfo.amb && tddeInfo.tdd ? ( // Periksa apakah data ada
+                        <table className="table table-borderless table-sm mb-0">
+                            <tbody>
+                                <tr>
+                                    <th style={{ width: '35%' }}>Angka Metabolisme Basal (AMB)</th>
+                                    <td>: {tddeInfo.amb?.toFixed(2) || '-'} {tddeInfo.unit || 'kcal/hari'}</td>
+                                </tr>
+                                <tr>
+                                    <th style={{ width: '35%' }}>Total Kebutuhan Energi (TDDE)</th>
+                                    <td>: {tddeInfo.tdd?.toFixed(2) || '-'} {tddeInfo.unit || 'kcal/hari'}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    ) : (
+                        <p className="text-muted fst-italic">
+                            {age && weight && height && gender ?
+                                'Sedang memuat data analisis kalori atau data tidak tersedia...' :
+                                'Lengkapi data fisik dan tingkat aktivitas pada menu "Edit Profil" untuk melihat analisis kebutuhan kalori Anda.'}
+                        </p>
+                    )}
                 </div>
             </div>
         </motion.div>

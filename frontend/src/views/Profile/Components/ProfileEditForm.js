@@ -7,6 +7,14 @@ const formVariants = {
     exit: { opacity: 0, y: -20, transition: { duration: 0.3 } }
 };
 
+const activityLevelOptions = [
+    { value: "Tidak Aktif", label: "Tidak aktif/minim olahraga" },
+    { value: "Ringan", label: "Olahraga ringan 1-3 hari/minggu" },
+    { value: "Sedang", label: "Olahraga sedang 3-5 hari/minggu" },
+    { value: "Berat", label: "Olahraga berat 6-7 hari/minggu" },
+    { value: "Sangat Berat", label: "Pekerjaan fisik berat/olahraga intensif setiap hari" }
+];
+
 const ProfileEditForm = ({
     name, setName,
     email, setEmail,
@@ -15,6 +23,7 @@ const ProfileEditForm = ({
     height, setHeight,
     gender, setGender,
     editMode, setEditMode,
+    activityLevel, setActivityLevel,
     handleSubmit,
     getProfile // Untuk tombol batal
 }) => {
@@ -70,7 +79,25 @@ const ProfileEditForm = ({
                         </select>
                     </div>
 
-                    <hr className="my-4" />
+                    <div className="mb-3">
+                        <label htmlFor="activityLevel" className="form-label">Tingkat Aktivitas</label>
+                        <select
+                            id="activityLevel"
+                            className='form-select'
+                            value={activityLevel}
+                            onChange={(e) => setActivityLevel(e.target.value)}
+                            disabled={!editMode}
+                        >
+                            <option value="" disabled>-- Pilih Tingkat Aktivitas --</option>
+                            {activityLevelOptions.map((option, index) => (
+                                <option key={index} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <hr className="my-2" />
 
                     <h4 className="mb-3 text-muted">Data Fisik</h4>
                     <div className="row">
