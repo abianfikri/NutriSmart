@@ -37,6 +37,10 @@ const Users = db.define('users', {
         type: DataTypes.INTEGER,
         allowNull: true,
     },
+    activityLevel: {
+        type: DataTypes.ENUM('Tidak Aktif', 'Ringan', 'Sedang', 'Berat', 'Sangat Berat'),
+        allowNull: true,
+    }
 }, {
     freezeTableName: true,
 });

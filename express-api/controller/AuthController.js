@@ -3,9 +3,9 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 const registerUser = async (req, res) => {
-    const { name, email, password, confirmPassword, gender, age, weight, height } = req.body;
+    const { name, email, password, confirmPassword, gender, age, weight, height, activityLevel } = req.body;
 
-    if (!name || !email || !password || !confirmPassword, !gender, !age, !weight, !height) return res.status(400).json(
+    if (!name || !email || !password || !confirmPassword, !gender, !age, !weight, !height, !activityLevel) return res.status(400).json(
         {
             status: "error",
             message: "Please fill in all fields"
@@ -51,7 +51,8 @@ const registerUser = async (req, res) => {
             gender: gender,
             age: age,
             weight: weight,
-            height: height
+            height: height,
+            activityLevel: activityLevel
         });
 
         res.status(201).json(
