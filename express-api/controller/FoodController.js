@@ -1,4 +1,5 @@
-import { generateMealPlan } from "../service/EdamamService.js";
+import { generateMealPlan, saveMealPlanToDb } from "../service/EdamamService.js";
+import Users from "../models/UserModel.js";
 
 const getMealPlan = async (req, res) => {
     try {
@@ -20,6 +21,33 @@ const getMealPlan = async (req, res) => {
     }
 }
 
+const saveMealPlan = async (req, res) => {
+    try {
+        const { mealPlan } = req.body;
+        const user = await Users.findByPk(req.userId);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        await saveMealPlanToDb(mealPlan, user.id);
+
+        res.status(200).json({
+            status: "success",
+            message: "Meal plan saved successfully",
+            data: mealPlan
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            status: "error",
+            message: "Failed to save meal plan",
+            error: error.message
+        });
+    }
+}
+
 export default {
-    getMealPlan
+    getMealPlan,
+    saveMealPlan
 };
