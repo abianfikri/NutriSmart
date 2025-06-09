@@ -1,10 +1,10 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Login from "./components/Login";
 import Register from "./components/Register";
-import Dashboard from "./components/Dashboard";
 import Navbar from "./components/Navbar";
 import AuthGuard from "./components/AuthGuard ";
 import Profile from "./views/Profile";
+import Meal from "./views/Meal";
 
 function App() {
   return (
@@ -17,7 +17,7 @@ function App() {
           {
             <>
               <Navbar />
-              <Dashboard />
+              <Meal />
             </>
           } />
 
