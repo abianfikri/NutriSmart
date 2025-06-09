@@ -1,46 +1,53 @@
 import axios from 'axios';
-import { uploadImageToFirebase } from '../helper/FirebaseUpload.js';
 
-export async function generateMealPlan(calories = 2000, timeFrame = 2) {
+export async function generateMealPlan({
+    minCalories = 1000,
+    maxCalories = 2000,
+    timeFrame = 2,
+    diets = [],
+    selectedMeals = [], // Default to Breakfast, Lunch, Dinner
+    selectedDishes = {}
+}) {
     const url = `https://api.edamam.com/api/meal-planner/v1/${process.env.EDAMAM_APP_ID}/select`;
+
+    // Construct sections dynamically
+    const sections = {};
+    const mealFitDefaults = {
+        Breakfast: { min: 100, max: 600 },
+        Lunch: { min: 300, max: 900 },
+        Dinner: { min: 200, max: 900 }
+    };
+
+    for (const meal of selectedMeals) {
+        const dish = selectedDishes[meal]; // e.g. 'egg' or undefined
+        const mealType = meal === 'Breakfast' ? 'breakfast' : 'lunch/dinner';
+
+        const acceptConditions = [
+            { meal: [mealType] }
+        ];
+        if (dish) {
+            acceptConditions.unshift({ dish: [dish] });
+        }
+
+        sections[meal] = {
+            accept: { all: acceptConditions },
+            fit: {
+                ENERC_KCAL: mealFitDefaults[meal]
+            }
+        };
+    }
 
     const payload = {
         size: timeFrame,
         plan: {
-            accept: { all: [] },
+            accept: {
+                all: diets.length > 0 ? [{ diet: diets }] : []
+            },
             fit: {
-                ENERC_KCAL: { min: 1000, max: calories },
+                ENERC_KCAL: { min: minCalories, max: maxCalories },
                 PROCNT: { min: 10 }
             },
-            sections: {
-                Breakfast: {
-                    accept: {
-                        all: [
-                            { dish: ["main course", "bread", "cereals", "egg", "pancake", "pastry", "sandwiches"] },
-                            { meal: ["breakfast"] }
-                        ]
-                    },
-                    fit: { ENERC_KCAL: { min: 100, max: 600 } }
-                },
-                Lunch: {
-                    accept: {
-                        all: [
-                            { dish: ["main course", "pasta", "pizza", "salad", "sandwiches", "soup"] },
-                            { meal: ["lunch/dinner"] }
-                        ]
-                    },
-                    fit: { ENERC_KCAL: { min: 300, max: 900 } }
-                },
-                Dinner: {
-                    accept: {
-                        all: [
-                            { dish: ["main course", "pasta", "pizza", "salad", "sandwiches", "soup"] },
-                            { meal: ["lunch/dinner"] }
-                        ]
-                    },
-                    fit: { ENERC_KCAL: { min: 200, max: 900 } }
-                }
-            }
+            sections
         }
     };
 
@@ -58,14 +65,13 @@ export async function generateMealPlan(calories = 2000, timeFrame = 2) {
     });
 
     const selection = response.data.selection;
-
     const results = [];
 
     for (let i = 0; i < selection.length; i++) {
         const sections = selection[i].sections;
         const dayMeals = { day: i + 1, meals: {} };
 
-        for (const mealType of ['Breakfast', 'Lunch', 'Dinner']) {
+        for (const mealType of selectedMeals) {
             const recipeLink = sections[mealType]?._links?.self?.href;
             if (recipeLink) {
                 try {
@@ -80,21 +86,9 @@ export async function generateMealPlan(calories = 2000, timeFrame = 2) {
 
                     const recipe = detailRes.data.recipe;
 
-                    let firebaseImageUrl = null;
-
-                    if (recipe.image) {
-                        try {
-                            const imageUrl = recipe.image;
-                            const filename = `meal-images/${Date.now()}-${i}-${mealType}.jpg`;
-                            firebaseImageUrl = await uploadImageToFirebase(imageUrl, filename);
-                        } catch (error) {
-                            console.error('Error uploading image to Firebase:', error);
-                        }
-                    }
-
                     dayMeals.meals[mealType] = {
                         label: recipe.label,
-                        image: firebaseImageUrl,
+                        image: recipe.image,
                         calories: Math.round(recipe.calories),
                         protein: +(recipe.totalNutrients?.PROCNT?.quantity ?? 0).toFixed(1),
                         fat: +(recipe.totalNutrients?.FAT?.quantity ?? 0).toFixed(1),

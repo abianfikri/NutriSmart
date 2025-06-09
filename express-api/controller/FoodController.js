@@ -4,8 +4,15 @@ import Users from "../models/UserModel.js";
 
 const getMealPlan = async (req, res) => {
     try {
-        const { calories, timeFrame } = req.body;
-        const mealPlan = await generateMealPlan(calories, timeFrame);
+        const { minCalories, maxCalories, timeFrame, diets, selectedMeals, selectedDishes } = req.body;
+        const mealPlan = await generateMealPlan({
+            minCalories: minCalories,
+            maxCalories: maxCalories,
+            timeFrame: timeFrame,
+            diets: diets ?? [],
+            selectedMeals: selectedMeals ?? ['Breakfast', 'Lunch', 'Dinner'],
+            selectedDishes: selectedDishes ?? {}
+        });
 
         res.status(200).json({
             status: "success",
