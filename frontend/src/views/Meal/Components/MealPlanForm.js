@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ConfirmationModal from './ConfirmationModal';
 
-const MealPlanForm = ({ onGenerate, loading }) => {
+const MealPlanForm = ({ onGenerate, loading, initialCalories, initialFormData }) => {
     const [step, setStep] = useState(0);
     const [form, setForm] = useState({
         minCalories: '',
@@ -16,8 +16,32 @@ const MealPlanForm = ({ onGenerate, loading }) => {
 
     const steps = ['Kalori & Waktu', 'Diet', 'Meal & Dish', 'Konfirmasi'];
 
-    const handleNext = () => setStep((prev) => Math.min(prev + 1, steps.length - 1));
-    const handleBack = () => setStep((prev) => Math.max(prev - 1, 0));
+    useEffect(() => {
+        if (initialCalories) {
+            const ambValue = initialCalories.amb !== undefined ? Math.round(initialCalories.amb) : '';
+            const tddValue = initialCalories.tdd !== undefined ? Math.round(initialCalories.tdd) : '';
+
+            setForm((prev) => ({
+                ...prev,
+                minCalories: ambValue,
+                maxCalories: tddValue,
+            }));
+        }
+    }, [initialCalories]);
+
+    // Tambahkan useEffect untuk mengisi form dengan initialFormData
+    useEffect(() => {
+        if (initialFormData) {
+            setForm({
+                minCalories: initialFormData.minCalories,
+                maxCalories: initialFormData.maxCalories,
+                timeFrame: initialFormData.timeFrame,
+                diets: initialFormData.diets || [],
+                selectedMeals: initialFormData.selectedMeals || [],
+                selectedDishes: initialFormData.selectedDishes || {},
+            });
+        }
+    }, [initialFormData]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -55,14 +79,10 @@ const MealPlanForm = ({ onGenerate, loading }) => {
         });
 
         try {
-            // Panggil fungsi generate (misal API call)
             await onGenerate(form);
-
-            // Jika berhasil, tutup loading dan tampilkan sukses
             window.Swal.close();
             window.Swal.fire('Sukses', 'Meal plan berhasil dibuat!', 'success');
         } catch (error) {
-            // Jika error, tutup loading dan tampilkan error
             window.Swal.close();
             window.Swal.fire('Error', 'Terjadi kesalahan saat generate meal plan', 'error');
         }
@@ -185,7 +205,6 @@ const MealPlanForm = ({ onGenerate, loading }) => {
     return (
         <div className="container p-4 shadow rounded bg-white" style={{ maxWidth: '600px' }}>
             <h4 className="mb-4">Form Meal Plan - Step {step + 1} / {steps.length}</h4>
-            {/* renderStep() sama seperti sebelumnya */}
             {renderStep()}
 
             <div className="d-flex justify-content-between mt-4">
