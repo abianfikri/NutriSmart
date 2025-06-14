@@ -20,7 +20,13 @@ const connectToDatabase = async () => {
 
 connectToDatabase();
 
-const allowedOrigins = ['http://localhost:3000'];
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://nutrismart-api.aaf-tech.my.id',
+    'https://nutrismart-api.aaf-tech.my.id',
+    'http://nutrismart-meal-app.aaf-tech.my.id/',
+    'https://nutrismart-meal-app.aaf-tech.my.id/',
+];
 
 app.use(cors({
     origin: allowedOrigins,
@@ -29,6 +35,14 @@ app.use(cors({
 
 app.use(cookieParser());
 app.use(express.json());
+
+// ✅ Simple health check route
+app.get('/', (req, res) => {
+    res.send('NutriSmart API is running!');
+});
+
 app.use(router);
 
-app.listen(5000, () => console.log('Server is running on port 5000'));
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
