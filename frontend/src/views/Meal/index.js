@@ -3,20 +3,25 @@ import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import MealPlanForm from './Components/MealPlanForm';
 import MealCard from './Components/MealCard';
+import { API_URL } from '../../api';
 
 const Meal = () => {
     const [token, setToken] = useState('');
     const [expired, setExpired] = useState(0);
     const [mealPlan, setMealPlan] = useState(null);
+    const [saveMealPlan, setSaveMealPlan] = useState(null);
     const [loading, setLoading] = useState(false);
     const [selectedTab, setSelectedTab] = useState('view'); // 'view' or 'form'
+    const [calorieAnalysis, setCalorieAnalysis] = useState(null);
+    const [latestFormData, setLatestFormData] = useState(null);
 
     const refreshToken = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/auth/token');
+            const res = await axios.get(`${API_URL.REFRESH_TOKEN}`);
             setToken(res.data.accessToken);
             const decoded = jwtDecode(res.data.accessToken);
             setExpired(decoded.exp);
+            return res.data.accessToken;
         } catch (error) {
             console.error('Unauthorized', error);
         }
@@ -26,7 +31,7 @@ const Meal = () => {
     axiosJwt.interceptors.request.use(async (config) => {
         const currentDate = new Date();
         if (expired * 1000 < currentDate.getTime()) {
-            const res = await axios.get('http://localhost:5000/api/auth/token');
+            const res = await axios.get(`${API_URL.REFRESH_TOKEN}`);
             config.headers.Authorization = `Bearer ${res.data.accessToken}`;
             setToken(res.data.accessToken);
             const decoded = jwtDecode(res.data.accessToken);
@@ -39,23 +44,146 @@ const Meal = () => {
         return Promise.reject(error);
     });
 
+    const getCalorieAnalysis = async (currentToken) => {
+        try {
+            const response = await axios.get(`${API_URL.GET_ANALYSIS}`, {
+                headers: {
+                    Authorization: `Bearer ${currentToken || token}`
+                }
+            });
+
+            setCalorieAnalysis(response.data.data);
+        } catch (error) {
+            console.error('Error fetching calorie analysis:', error);
+        }
+    }
+
+    const fetchSavedMealPlan = async (currentToken) => {
+        setLoading(true);
+        try {
+            const response = await axiosJwt.get(`${API_URL.GET_MEAL_PLAN}`, {
+                headers: {
+                    Authorization: `Bearer ${currentToken || token}`
+                }
+            });
+            if (response.data && response.data.data && response.data.data.mealPlan) {
+                setSaveMealPlan(response.data.data); // Simpan seluruh objek data dari API
+                setMealPlan(response.data.data.mealPlan); // Tampilkan meal plan yang tersimpan di view
+                setLatestFormData({ // Set latestFormData dari meal plan yang tersimpan
+                    minCalories: response.data.data.minCalories,
+                    maxCalories: response.data.data.maxCalories,
+                    timeFrame: response.data.data.timeFrame,
+                    diets: response.data.data.diets,
+                    selectedMeals: response.data.data.selectedMeals,
+                    selectedDishes: response.data.data.selectedDishes,
+                });
+            } else {
+                setSaveMealPlan(null);
+                setMealPlan(null);
+                setLatestFormData(null);
+            }
+        } catch (error) {
+            console.error('Error fetching saved meal plan:', error);
+            setSaveMealPlan(null);
+            setMealPlan(null);
+            setLatestFormData(null);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        refreshToken();
+        const init = async () => {
+            const currentToken = await refreshToken();
+            if (currentToken) {
+                getCalorieAnalysis(currentToken);
+                fetchSavedMealPlan(currentToken);
+            }
+        }
+
+        init();
     }, []);
 
     const handleGenerate = async (formData) => {
         setLoading(true);
         setMealPlan(null);
+        setLatestFormData(formData);
         try {
-            const res = await axiosJwt.post('http://localhost:5000/api/users/meal-plan', formData);
+            const res = await axiosJwt.post(`${API_URL.GET_RECOMMENDATION}`, formData);
             setMealPlan(res.data.data);
             setSelectedTab('view'); // pindah ke tab hasil
         } catch (err) {
             console.error(err);
-            alert('Failed to generate meal plan');
+            window.Swal.fire('Error', 'Terjadi kesalahan saat generate meal plan', 'error');
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSaveMealPlan = async () => {
+        // If there's no mealPlan generated or no form data to save, return
+        if (!mealPlan || !latestFormData) {
+            window.Swal.fire('Peringatan', 'Tidak ada meal plan untuk disimpan atau data form tidak ditemukan.', 'warning');
+            return;
+        }
+
+        window.Swal.fire({
+            title: 'Sedang menyimpan...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                window.Swal.showLoading();
+            },
+        });
+
+        try {
+            const dataToSave = {
+                mealPlan: mealPlan, // mealPlan yang sedang ditampilkan
+                minCalories: latestFormData.minCalories,
+                maxCalories: latestFormData.maxCalories,
+                timeFrame: latestFormData.timeFrame,
+                diets: latestFormData.diets,
+                selectedMeals: latestFormData.selectedMeals,
+                selectedDishes: latestFormData.selectedDishes,
+            };
+
+            const response = await axiosJwt.post(`${API_URL.SAVE_MEAL_PLAN}`, dataToSave);
+            window.Swal.close();
+            window.Swal.fire(
+                'Berhasil',
+                response.data.message,
+                'success'
+            );
+            // Setelah berhasil menyimpan/mengupdate, update savedMealPlan dengan data terbaru dari respons
+            setSaveMealPlan(response.data.data);
+            setMealPlan(response.data.data.mealPlan); // Pastikan mealPlan yang ditampilkan adalah yang tersimpan
+            // Set latestFormData agar sesuai dengan data yang baru tersimpan (untuk edit selanjutnya)
+            setLatestFormData({
+                minCalories: response.data.data.minCalories,
+                maxCalories: response.data.data.maxCalories,
+                timeFrame: response.data.data.timeFrame,
+                diets: response.data.data.diets,
+                selectedMeals: response.data.data.selectedMeals,
+                selectedDishes: response.data.data.selectedDishes,
+            });
+        } catch (error) {
+            window.Swal.close();
+            window.Swal.fire(
+                'Gagal',
+                'Terjadi kesalahan saat menyimpan meal plan.',
+                'error'
+            );
+            console.error(error);
+        }
+    }
+
+    const isCurrentMealPlanSaved = () => {
+        if (!mealPlan || !saveMealPlan?.mealPlan) return false;
+
+        // Basic check: compare length and first day's breakfast label
+        // For a more robust check, you might need a deep equality comparison library
+        return mealPlan.length === saveMealPlan.mealPlan.length &&
+            mealPlan[0]?.day === saveMealPlan.mealPlan[0]?.day &&
+            mealPlan[0]?.meals?.breakfast?.label === saveMealPlan.mealPlan[0]?.meals?.breakfast?.label;
     };
 
     return (
@@ -66,15 +194,28 @@ const Meal = () => {
                     <div className="list-group">
                         <button
                             className={`list-group-item list-group-item-action ${selectedTab === 'view' ? 'active' : ''}`}
-                            onClick={() => setSelectedTab('view')}
+                            onClick={() => {
+                                setSelectedTab('view');
+                                // Jika ada meal plan yang tersimpan, tampilkan itu di tab 'view'
+                                if (saveMealPlan) {
+                                    setMealPlan(saveMealPlan.mealPlan);
+                                } else {
+                                    setMealPlan(null);
+                                }
+                            }}
                         >
                             Meal Plan Anda
                         </button>
                         <button
                             className={`list-group-item list-group-item-action ${selectedTab === 'form' ? 'active' : ''}`}
-                            onClick={() => setSelectedTab('form')}
+                            onClick={() => {
+                                setSelectedTab('form');
+                                // Saat beralih ke form, pastikan `mealPlan` di-reset ke `null`
+                                // agar `initialFormData` di `MealPlanForm` yang berlaku
+                                setMealPlan(null);
+                            }}
                         >
-                            Buat Meal Plan Baru
+                            {saveMealPlan ? 'Edit Meal Plan Anda' : 'Buat Meal Plan Baru'}
                         </button>
                     </div>
                 </div>
@@ -82,19 +223,63 @@ const Meal = () => {
                 {/* Main Content */}
                 <div className="col-md-9">
                     {selectedTab === 'view' && (
-                        <>
-                            <h3 className="mb-3">Meal Plan Anda</h3>
-                            {mealPlan ? (
-                                <MealCard data={mealPlan} />
+                        <div className="position-relative"> {/* Tambahkan div untuk relative positioning */}
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                                <h3 className="mb-0">Meal Plan Anda</h3>
+                                {/* Tombol Edit /Simpan */}
+                                {loading ? null : ( // Hide buttons if loading
+                                    saveMealPlan && isCurrentMealPlanSaved() ? (
+                                        <button
+                                            className="btn btn-warning btn-sm" // Warna warning untuk edit
+                                            onClick={() => {
+                                                setSelectedTab('form'); // Pindah ke tab form
+                                                setMealPlan(null); // Kosongkan tampilan meal plan saat edit
+                                            }}
+                                        >
+                                            Edit Meal Plan
+                                        </button>
+                                    ) : mealPlan && !isCurrentMealPlanSaved() ? (
+                                        <button
+                                            className="btn btn-primary btn-sm"
+                                            onClick={handleSaveMealPlan}
+                                            disabled={loading}
+                                        >
+                                            {loading ? 'Menyimpan...' : 'Simpan Meal Plan'}
+                                        </button>
+                                    ) : null
+                                )}
+                            </div>
+                            {loading && !mealPlan ? ( // Tampilkan loading saat fetch saved meal plan atau generate baru
+                                <div className="text-center mt-5">
+                                    <div className="spinner-border text-primary" role="status">
+                                        <span className="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p>Memuat meal plan...</p>
+                                </div>
                             ) : (
-                                <div className="alert alert-info">Belum ada meal plan yang dibuat.</div>
+                                mealPlan ? ( // Gunakan mealPlan (hasil generate atau saved)
+                                    // Konten meal card, wrap dalam div dengan max-height dan overflow-y
+                                    <div style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
+                                        <MealCard data={mealPlan} />
+                                    </div>
+                                ) : (
+                                    <div className="alert alert-info" role="alert">
+                                        Data meal plan belum dibuat. Silakan buat meal plan baru di tab "{saveMealPlan ? 'Edit Meal Plan Anda' : 'Buat Meal Plan Baru'}".
+                                    </div>
+                                )
                             )}
-                        </>
+                        </div>
                     )}
 
                     {selectedTab === 'form' && (
                         <>
-                            <MealPlanForm onGenerate={handleGenerate} loading={loading} />
+                            {/* Pass savedMealPlan.data ke initialFormData jika ada */}
+                            <MealPlanForm
+                                onGenerate={handleGenerate}
+                                loading={loading}
+                                initialCalories={calorieAnalysis}
+                                initialFormData={saveMealPlan} // Mengirimkan savedMealPlan sebagai initialFormData
+                            />
                         </>
                     )}
                 </div>
