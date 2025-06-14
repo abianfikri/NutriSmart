@@ -9,7 +9,7 @@ const Meals = db.define('meals', {
         primaryKey: true,
         autoIncrement: true,
     },
-    userId: {
+    mealRequestId: {
         type: DataTypes.INTEGER,
     },
     day: {
