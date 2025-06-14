@@ -1,6 +1,7 @@
 {
   "name": "frontend",
   "version": "0.1.0",
+  "homepage": "https://nutrismart-meal-app.aaf-tech.my.id/",
   "private": true,
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
