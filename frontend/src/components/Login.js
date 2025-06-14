@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import logoNutriSmart from '../assets/logo.jpg'; // Sesuaikan path ini jika logo Anda ada di tempat lain
+import { API_URL } from '../api';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -13,7 +14,7 @@ const Login = () => {
         e.preventDefault();
 
         try {
-            const response = await axios.post('http://localhost:5000/api/auth/login', {
+            const response = await axios.post(`${API_URL.LOGIN}`, {
                 email: email,
                 password: password
             });

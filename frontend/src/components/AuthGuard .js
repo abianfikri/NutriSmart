@@ -3,6 +3,7 @@ import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import axios from "axios"
 import { jwtDecode } from "jwt-decode"
+import { API_URL } from "../api"
 
 const AuthGuard = () => {
     const navigate = useNavigate()
@@ -10,7 +11,7 @@ const AuthGuard = () => {
     useEffect(() => {
         const checkToken = async () => {
             try {
-                const response = await axios.get("http://localhost:5000/api/auth/token", {
+                const response = await axios.get(`${API_URL.REFRESH_TOKEN}`, {
                     withCredentials: true, // penting untuk kirim cookie
                 });
                 const token = response.data.accessToken;

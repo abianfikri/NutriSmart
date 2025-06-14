@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { API_URL } from '../api';
 
 const steps = ['Informasi Diri', 'Data Fisik', 'Keamanan Akun'];
 
@@ -74,7 +75,7 @@ const Register = () => {
         };
 
         try {
-            await axios.post('http://localhost:5000/api/auth/register', dataToSubmit);
+            await axios.post(`${API_URL.REGISTER}`, dataToSubmit);
 
             window.Swal.fire({
                 icon: 'success',

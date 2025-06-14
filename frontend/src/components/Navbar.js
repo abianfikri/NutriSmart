@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, NavLink } from 'react-router-dom';
+import { API_URL, BASE_URL } from '../api';
 
 const Navbar = () => {
     const navigate = useNavigate();
@@ -18,7 +19,7 @@ const Navbar = () => {
 
         if (result.isConfirmed) {
             try {
-                await axios.delete('http://localhost:5000/api/auth/logout');
+                await axios.delete(`${API_URL.LOGOUT}`);
                 window.Swal.fire({
                     title: 'Logout',
                     text: 'Anda telah berhasil logout',

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import { AnimatePresence } from 'framer-motion';
-
+import { API_URL } from '../../api';
 import ProfileSidebar from './Components/ProfileSidebar';
 import ProfileInfoCard from './Components/ProfileInfoCard';
 import ProfileEditForm from './Components/ProfileEditForm';
@@ -31,7 +31,7 @@ const Profile = () => {
     // Fungsi refreshToken tetap sama
     const refreshToken = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/auth/token');
+            const response = await axios.get(`${API_URL.REFRESH_TOKEN}`);
             setToken(response.data.accessToken);
             const decoded = jwtDecode(response.data.accessToken);
             // setName(decoded.name); // Sebaiknya name di-set dari getProfile
@@ -80,7 +80,7 @@ const Profile = () => {
                     return;
                 }
                 // Lanjutkan dengan token yang baru di-refresh
-                const response = await axiosJwt.get("http://localhost:5000/api/users/me", {
+                const response = await axiosJwt.get(`${API_URL.GET_USER}`, {
                     headers: { Authorization: `Bearer ${refreshedToken}` }
                 });
 
@@ -94,7 +94,7 @@ const Profile = () => {
                 setActivityLevel(user.activityLevel || '');
 
                 // Analisis TDDE 
-                const responseAnalysis = await axiosJwt.get("http://localhost:5000/api/users/analysis", {
+                const responseAnalysis = await axiosJwt.get(`${API_URL.GET_ANALYSIS}`, {
                     headers: {
                         Authorization: `Bearer ${refreshedToken}`
                     }
@@ -110,7 +110,7 @@ const Profile = () => {
         }
 
         try {
-            const response = await axiosJwt.get("http://localhost:5000/api/users/me", {
+            const response = await axiosJwt.get(`${API_URL.GET_USER}`, {
                 headers: {
                     Authorization: `Bearer ${tokenToUse}`
                 }
@@ -125,7 +125,7 @@ const Profile = () => {
             setActivityLevel(user.activityLevel || '');
 
             // Analisis TDDE
-            const responseAnalysis = await axiosJwt.get("http://localhost:5000/api/users/analysis", {
+            const responseAnalysis = await axiosJwt.get(`${API_URL.GET_ANALYSIS}`, {
                 headers: {
                     Authorization: `Bearer ${tokenToUse}`
                 }
@@ -142,7 +142,7 @@ const Profile = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axiosJwt.patch('http://localhost:5000/api/users/me', {
+            const response = await axiosJwt.patch(`${API_URL.UPDATE_USER}`, {
                 name,
                 email,
                 gender,
