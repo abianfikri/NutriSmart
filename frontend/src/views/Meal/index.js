@@ -107,18 +107,66 @@ const Meal = () => {
     const handleGenerate = async (formData) => {
         setLoading(true);
         setMealPlan(null);
-        setLatestFormData(formData);
+        // Penting: Bersihkan selectedDishes agar hanya berisi yang benar-benar dipilih di selectedMeals
+        const cleanedSelectedDishes = {};
+        formData.selectedMeals.forEach(meal => {
+            if (formData.selectedDishes[meal]) {
+                cleanedSelectedDishes[meal] = formData.selectedDishes[meal];
+            }
+        });
+
+        const payload = {
+            ...formData,
+            minCalories: Number(formData.minCalories),
+            maxCalories: Number(formData.maxCalories),
+            timeFrame: Number(formData.timeFrame),
+            selectedDishes: cleanedSelectedDishes,
+        };
+
+        setLatestFormData(payload);
+
         try {
-            const res = await axiosJwt.post(`${API_URL.GET_RECOMMENDATION}`, formData);
-            setMealPlan(res.data.data);
-            setSelectedTab('view'); // pindah ke tab hasil
-        } catch (err) {
-            console.error(err);
-            window.Swal.fire('Error', 'Terjadi kesalahan saat generate meal plan', 'error');
+            const response = await axiosJwt.post(`${API_URL.GET_RECOMMENDATION}`, payload);
+
+            if (response.data && response.data.status === 'success') {
+                setMealPlan(response.data.data);
+                setSelectedTab('view');
+                return {
+                    success: true,
+                    message: response.data.message,
+                    data: response.data.data,
+                };
+            } else {
+                return {
+                    success: false,
+                    message: response.data.message,
+                    statusCode: response.status || 400,
+                };
+            }
+        } catch (error) {
+            let message = 'Terjadi kesalahan saat mengambil data. Silakan coba lagi.';
+            let statusCode = 500;
+
+            if (error.response) {
+                const { status, data } = error.response;
+                statusCode = status;
+                if (status === 400) {
+                    message = data.message || 'Input tidak valid';
+                } else if (status === 500) {
+                    message = data.message || 'Terjadi kesalahan server.';
+                }
+            }
+
+            return {
+                success: false,
+                message: message,
+                statusCode: statusCode
+            };
         } finally {
             setLoading(false);
         }
     };
+
 
     const handleSaveMealPlan = async () => {
         // If there's no mealPlan generated or no form data to save, return
@@ -126,6 +174,14 @@ const Meal = () => {
             window.Swal.fire('Peringatan', 'Tidak ada meal plan untuk disimpan atau data form tidak ditemukan.', 'warning');
             return;
         }
+
+        // Penting: Bersihkan selectedDishes agar hanya berisi yang benar-benar dipilih di selectedMeals
+        const cleanedSelectedDishes = {};
+        latestFormData.selectedMeals.forEach(meal => {
+            if (latestFormData.selectedDishes[meal]) {
+                cleanedSelectedDishes[meal] = latestFormData.selectedDishes[meal];
+            }
+        });
 
         window.Swal.fire({
             title: 'Sedang menyimpan...',
@@ -143,7 +199,7 @@ const Meal = () => {
                 timeFrame: latestFormData.timeFrame,
                 diets: latestFormData.diets,
                 selectedMeals: latestFormData.selectedMeals,
-                selectedDishes: latestFormData.selectedDishes,
+                selectedDishes: cleanedSelectedDishes,
             };
 
             const response = await axiosJwt.post(`${API_URL.SAVE_MEAL_PLAN}`, dataToSave);
@@ -179,11 +235,17 @@ const Meal = () => {
     const isCurrentMealPlanSaved = () => {
         if (!mealPlan || !saveMealPlan?.mealPlan) return false;
 
-        // Basic check: compare length and first day's breakfast label
-        // For a more robust check, you might need a deep equality comparison library
-        return mealPlan.length === saveMealPlan.mealPlan.length &&
-            mealPlan[0]?.day === saveMealPlan.mealPlan[0]?.day &&
-            mealPlan[0]?.meals?.breakfast?.label === saveMealPlan.mealPlan[0]?.meals?.breakfast?.label;
+        const areFormsEqual =
+            latestFormData?.minCalories === saveMealPlan.minCalories &&
+            latestFormData?.maxCalories === saveMealPlan.maxCalories &&
+            latestFormData?.timeFrame === saveMealPlan.timeFrame &&
+            JSON.stringify(latestFormData?.diets) === JSON.stringify(saveMealPlan.diets) &&
+            JSON.stringify(latestFormData?.selectedMeals) === JSON.stringify(saveMealPlan.selectedMeals) &&
+            JSON.stringify(latestFormData?.selectedDishes) === JSON.stringify(saveMealPlan.selectedDishes);
+
+        const areMealPlansContentEqual = JSON.stringify(mealPlan) === JSON.stringify(saveMealPlan.mealPlan);
+
+        return areFormsEqual && areMealPlansContentEqual;
     };
 
     return (
@@ -226,26 +288,28 @@ const Meal = () => {
                         <div className="position-relative"> {/* Tambahkan div untuk relative positioning */}
                             <div className="d-flex justify-content-between align-items-center mb-3">
                                 <h3 className="mb-0">Meal Plan Anda</h3>
-                                {/* Tombol Edit /Simpan */}
-                                {loading ? null : ( // Hide buttons if loading
-                                    saveMealPlan && isCurrentMealPlanSaved() ? (
-                                        <button
-                                            className="btn btn-warning btn-sm" // Warna warning untuk edit
-                                            onClick={() => {
-                                                setSelectedTab('form'); // Pindah ke tab form
-                                                setMealPlan(null); // Kosongkan tampilan meal plan saat edit
-                                            }}
-                                        >
-                                            Edit Meal Plan
-                                        </button>
-                                    ) : mealPlan && !isCurrentMealPlanSaved() ? (
-                                        <button
-                                            className="btn btn-primary btn-sm"
-                                            onClick={handleSaveMealPlan}
-                                            disabled={loading}
-                                        >
-                                            {loading ? 'Menyimpan...' : 'Simpan Meal Plan'}
-                                        </button>
+                                {/* Tombol Edit / Simpan */}
+                                {loading ? null : ( // Sembunyikan tombol jika loading
+                                    mealPlan ? ( // Tampilkan tombol jika ada mealPlan yang ditampilkan
+                                        saveMealPlan && isCurrentMealPlanSaved() ? (
+                                            <button
+                                                className="btn btn-warning btn-sm"
+                                                onClick={() => {
+                                                    setSelectedTab('form');
+                                                    setMealPlan(null);
+                                                }}
+                                            >
+                                                Edit Meal Plan
+                                            </button>
+                                        ) : (
+                                            <button
+                                                className="btn btn-primary btn-sm"
+                                                onClick={handleSaveMealPlan}
+                                                disabled={loading}
+                                            >
+                                                {loading ? 'Menyimpan...' : 'Simpan Meal Plan'}
+                                            </button>
+                                        )
                                     ) : null
                                 )}
                             </div>

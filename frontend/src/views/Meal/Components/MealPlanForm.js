@@ -32,14 +32,18 @@ const MealPlanForm = ({ onGenerate, loading, initialCalories, initialFormData })
     // Tambahkan useEffect untuk mengisi form dengan initialFormData
     useEffect(() => {
         if (initialFormData) {
-            setForm({
-                minCalories: initialFormData.minCalories,
-                maxCalories: initialFormData.maxCalories,
-                timeFrame: initialFormData.timeFrame,
-                diets: initialFormData.diets || [],
-                selectedMeals: initialFormData.selectedMeals || [],
-                selectedDishes: initialFormData.selectedDishes || {},
-            });
+            const newFormState = {
+                minCalories: initialFormData.minCalories || '',
+                maxCalories: initialFormData.maxCalories || '',
+                timeFrame: initialFormData.timeFrame || '',
+                diets: Array.isArray(initialFormData.diets) ? initialFormData.diets : [],
+                selectedMeals: Array.isArray(initialFormData.selectedMeals) ? initialFormData.selectedMeals : [],
+                selectedDishes: typeof initialFormData.selectedDishes === 'object' && !Array.isArray(initialFormData.selectedDishes)
+                    ? initialFormData.selectedDishes
+                    : {},
+            };
+
+            setForm(newFormState);
         }
     }, [initialFormData]);
 
@@ -79,14 +83,33 @@ const MealPlanForm = ({ onGenerate, loading, initialCalories, initialFormData })
         });
 
         try {
-            await onGenerate(form);
+            const response = await onGenerate(form);
             window.Swal.close();
-            window.Swal.fire('Sukses', 'Meal plan berhasil dibuat!', 'success');
+
+            if (response.success) {
+                window.Swal.fire(
+                    'Berhasil',
+                    response.message,
+                    'success'
+                );
+            } else {
+                const swalType = response.statusCode === 400 ? 'warning' : 'error';
+                window.Swal.fire(
+                    'Gagal',
+                    response.message,
+                    swalType
+                );
+            }
         } catch (error) {
             window.Swal.close();
-            window.Swal.fire('Error', 'Terjadi kesalahan saat generate meal plan', 'error');
+            window.Swal.fire(
+                'Gagal',
+                'Terjadi kesalahan saat memproses data. Silakan coba lagi.',
+                'error'
+            );
         }
-    }
+    };
+
 
     const renderStep = () => {
         switch (step) {
@@ -153,6 +176,8 @@ const MealPlanForm = ({ onGenerate, loading, initialCalories, initialFormData })
                     </>
                 );
             case 2:
+                console.log("MealPlanForm: Rendering Step 2. Current form.selectedMeals:", form.selectedMeals);
+                console.log("MealPlanForm: Current form.selectedDishes:", form.selectedDishes);
                 const mealOptions = ['breakfast', 'lunch', 'dinner'];
                 const dishOptions = {
                     breakfast: ['main course', 'Oatmeal', 'Omelette'],

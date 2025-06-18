@@ -2,11 +2,15 @@ import React from 'react';
 import { Modal, Button } from 'react-bootstrap';
 
 const ConfirmationModal = ({ show, onHide, form, onConfirm }) => {
-    const formatArray = (arr) => (arr.length ? arr.join(', ') : 'Tidak ada');
+    const formatArray = (arr) => (Array.isArray(arr) && arr.length ? arr.join(', ') : 'Tidak ada');
+
     const formatDishPerMeal = (dishes) =>
-        Object.entries(dishes)
-            .map(([meal, dish]) => `${meal}: ${dish || '-'}`)
-            .join(', ');
+        dishes && typeof dishes === 'object' && !Array.isArray(dishes)
+            ? Object.entries(dishes)
+                .map(([meal, dish]) => `${meal}: ${dish || '-'}`)
+                .join(', ')
+            : 'Tidak ada';
+
 
     return (
         <Modal show={show} onHide={onHide} centered>
