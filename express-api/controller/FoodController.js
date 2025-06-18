@@ -6,13 +6,55 @@ import MealRequests from "../models/MealRequest.js";
 const getMealPlan = async (req, res) => {
     try {
         const { minCalories, maxCalories, timeFrame, diets, selectedMeals, selectedDishes } = req.body;
+
+        if (typeof minCalories !== 'number' || typeof maxCalories !== 'number' || typeof timeFrame !== 'number') {
+            return res.status(400).json({
+                status: "error",
+                message: "Kalori dan waktu harus berupa angka"
+            });
+        }
+
+        if (minCalories > maxCalories) {
+            return res.status(400).json({
+                status: "error",
+                message: "Kalori minimum harus lebih kecil atau sama dengan kalori maksimum"
+            });
+        }
+
+        // Validasi selectedMeals
+        const validMeals = ['breakfast', 'lunch', 'dinner'];
+        const filteredMeals = Array.isArray(selectedMeals)
+            ? selectedMeals.filter(meal => validMeals.includes(meal))
+            : [];
+
+        if (filteredMeals.length < 2 || filteredMeals.length > 3) {
+            return res.status(400).json({
+                status: "error",
+                message: "Anda harus memilih dua makanan dari Breakfast, Lunch, Dinner"
+            });
+        }
+
+        // Validasi selectedDishes
+        if (
+            !selectedDishes ||
+            typeof selectedDishes !== 'object' ||
+            Array.isArray(selectedDishes) ||
+            Object.keys(selectedDishes).length === 0
+        ) {
+            return res.status(400).json({
+                status: "error",
+                message: "Jenis Makanan tidak boleh kosong"
+            });
+        }
+
+
         const mealPlan = await generateMealPlan({
             minCalories: minCalories,
             maxCalories: maxCalories,
             timeFrame: timeFrame,
             diets: diets ?? [],
-            selectedMeals: selectedMeals ?? ['Breakfast', 'Lunch', 'Dinner'],
-            selectedDishes: selectedDishes ?? {}
+            selectedMeals: filteredMeals,
+            selectedDishes: selectedDishes
         });
 
         res.status(200).json({
