@@ -117,7 +117,7 @@ export async function getSaveMealPlanFromDb(userId) {
 
         return {
             status: "success",
-            message: "Fetched saved meal plan",
+            message: "Berhasil mengambil data meal plan anda",
             data: {
                 mealRequestId: mealRequest.id,
                 minCalories: mealRequest.minCalories,

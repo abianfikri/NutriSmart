@@ -59,14 +59,14 @@ const getMealPlan = async (req, res) => {
 
         res.status(200).json({
             status: "success",
-            message: "Meal plan generated successfully",
+            message: "Berhasil membuat rencana makan",
             data: mealPlan
         });
     } catch (error) {
         console.error(error);
         res.status(500).json({
             status: "error",
-            message: "Failed to generate meal plan",
+            message: "Gagal membuat rencana makan",
             error: error.message
         });
     }
@@ -117,7 +117,7 @@ const saveMealPlan = async (req, res) => {
 
         res.status(200).json({
             status: "success",
-            message: existingMealRequest ? "Meal plan updated successfully" : "Meal plan saved successfully",
+            message: existingMealRequest ? "Rencana makan berhasil diperbarui" : "Rencana makan berhasil dibuat",
             data: {
                 mealRequestId: currentMealRequest.id,
                 minCalories: currentMealRequest.minCalories,
@@ -133,7 +133,7 @@ const saveMealPlan = async (req, res) => {
         console.error(error);
         res.status(500).json({
             status: "error",
-            message: "Failed to save meal plan",
+            message: "Terjadi kesalahan server",
             error: error.message
         });
     }

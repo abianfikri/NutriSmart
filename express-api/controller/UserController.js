@@ -45,7 +45,7 @@ const getUserProfileByToken = async (req, res) => {
 
         res.status(200).json({
             status: "success",
-            message: "Profile fetched successfully",
+            message: "Data anda berhasil diambil",
             data: user
         });
     } catch (error) {
@@ -131,7 +131,7 @@ const calculateTDDE = async (req, res) => {
         tdd = amb * activityLevel;
         res.status(200).json({
             status: "success",
-            message: "TDDE calculated successfully",
+            message: "Berhasil menghitung TDDE dan AMB",
             data: {
                 tdd: tdd,
                 amb: amb,

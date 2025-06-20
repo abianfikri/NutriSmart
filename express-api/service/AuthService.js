@@ -8,7 +8,7 @@ export async function registerUserService(userData) {
     if (!name || !email || !password || !confirmPassword, !gender, !age, !weight, !height, !activityLevel) {
         throw {
             status: "error",
-            message: "Please fill in all fields"
+            message: "Tidak boleh ada bagian yang kosong"
         }
     }
 
@@ -16,7 +16,7 @@ export async function registerUserService(userData) {
     if (isNaN(age) || isNaN(weight) || isNaN(height)) {
         throw {
             status: "error",
-            message: "Age must be a number"
+            message: "Age, Weight, dan Height harus berupa angka"
         }
     }
 
@@ -29,7 +29,7 @@ export async function registerUserService(userData) {
     if (emailExist) {
         throw {
             status: "error",
-            message: "Email already exists"
+            message: "Email sudah terdaftar"
         }
     }
 
@@ -37,14 +37,14 @@ export async function registerUserService(userData) {
     if (password.length < 6) {
         throw {
             status: "error",
-            message: "Password must be at least 6 characters"
+            message: "Password harus minimal 6 karakter"
         }
     }
 
     if (password !== confirmPassword) {
         throw {
             status: "error",
-            message: "Password and Confirm Password do not match"
+            message: "Password tidak sama"
         }
     }
 
@@ -64,7 +64,7 @@ export async function registerUserService(userData) {
 
     return {
         status: "success",
-        message: "Register successfully",
+        message: "Pendaftaran berhasil",
         data: user
     };
 }
@@ -75,7 +75,7 @@ export async function loginUserService(userData, setCookie) {
     if (!email || !password) {
         throw {
             status: "error",
-            message: "Please fill in all fields"
+            message: "Tidak boleh ada bagian yang kosong"
         }
     }
 
@@ -88,7 +88,7 @@ export async function loginUserService(userData, setCookie) {
     if (!user) {
         throw {
             status: "error",
-            message: "Email not found"
+            message: "Email tidak terdaftar"
         }
     }
 
@@ -97,7 +97,7 @@ export async function loginUserService(userData, setCookie) {
     if (!match) {
         throw {
             status: "error",
-            message: "Wrong password"
+            message: "Password salah"
         }
     }
 
@@ -129,7 +129,7 @@ export async function loginUserService(userData, setCookie) {
 
     return {
         status: "success",
-        message: "Login successfully",
+        message: "Login berhasil. Selamat datang kembali, " + name + "!",
         data: {
             accessToken: accessToken
         }
@@ -153,7 +153,7 @@ export async function logoutUserService(refreshToken, clearCookie) {
     if (!user) {
         throw {
             status: "error",
-            message: "No user found"
+            message: "Tidak ada user yang terkait dengan token ini"
         }
     }
 
@@ -166,6 +166,6 @@ export async function logoutUserService(refreshToken, clearCookie) {
 
     return {
         status: "success",
-        message: "Logout successfully"
+        message: "Logout berhasil. Sampai jumpa kembali, " + user.name + "!"
     };
 }
