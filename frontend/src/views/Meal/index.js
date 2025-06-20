@@ -1,9 +1,11 @@
+// src/pages/Meal.js (atau lokasi file Meal.js Anda)
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
-import MealPlanForm from './Components/MealPlanForm';
-import MealCard from './Components/MealCard';
-import { API_URL } from '../../api';
+import MealPlanForm from './Components/MealPlanForm'; // Perbaiki path jika perlu
+import MealCard from './Components/MealCard'; // Perbaiki path jika perlu
+import RequestCard from './Components/RequestCard'; // Perbaiki path jika perlu
+import { API_URL } from '../../api'; // Perbaiki path jika perlu
 
 const Meal = () => {
     const [token, setToken] = useState('');
@@ -11,7 +13,7 @@ const Meal = () => {
     const [mealPlan, setMealPlan] = useState(null);
     const [saveMealPlan, setSaveMealPlan] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [selectedTab, setSelectedTab] = useState('view'); // 'view' or 'form'
+    const [selectedTab, setSelectedTab] = useState('view');
     const [calorieAnalysis, setCalorieAnalysis] = useState(null);
     const [latestFormData, setLatestFormData] = useState(null);
 
@@ -51,12 +53,45 @@ const Meal = () => {
                     Authorization: `Bearer ${currentToken || token}`
                 }
             });
-
             setCalorieAnalysis(response.data.data);
         } catch (error) {
             console.error('Error fetching calorie analysis:', error);
         }
     }
+
+    const parseJsonString = (jsonString, defaultValue) => {
+        if (typeof jsonString === 'string') {
+            try {
+                let parsed = JSON.parse(jsonString);
+
+                if (typeof parsed === 'string') {
+                    try {
+                        parsed = JSON.parse(parsed);
+                    } catch (e) {
+                        console.warn('Failed to parse JSON string (second attempt):', parsed, e);
+                        return defaultValue;
+                    }
+                }
+
+                if (defaultValue === null || defaultValue === undefined) {
+                    return parsed;
+                } else if (Array.isArray(defaultValue) && !Array.isArray(parsed)) {
+                    console.warn('Parsed value is not an array as expected:', parsed);
+                    return defaultValue;
+                } else if (typeof defaultValue === 'object' && defaultValue !== null && (typeof parsed !== 'object' || parsed === null)) {
+                    console.warn('Parsed value is not an object as expected:', parsed);
+                    return defaultValue;
+                }
+                return parsed;
+
+            } catch (e) {
+                console.warn('Failed to parse JSON string (first attempt):', jsonString, e);
+                return defaultValue;
+            }
+        }
+        return jsonString;
+    };
+    // Ini adalah akhir dari fungsi helper parseJsonString
 
     const fetchSavedMealPlan = async (currentToken) => {
         setLoading(true);
@@ -66,16 +101,28 @@ const Meal = () => {
                     Authorization: `Bearer ${currentToken || token}`
                 }
             });
-            if (response.data && response.data.data && response.data.data.mealPlan) {
-                setSaveMealPlan(response.data.data); // Simpan seluruh objek data dari API
-                setMealPlan(response.data.data.mealPlan); // Tampilkan meal plan yang tersimpan di view
-                setLatestFormData({ // Set latestFormData dari meal plan yang tersimpan
-                    minCalories: response.data.data.minCalories,
-                    maxCalories: response.data.data.maxCalories,
-                    timeFrame: response.data.data.timeFrame,
-                    diets: response.data.data.diets,
-                    selectedMeals: response.data.data.selectedMeals,
-                    selectedDishes: response.data.data.selectedDishes,
+            if (response.data && response.data.data && response.data.status === 'success') {
+                const apiData = response.data.data;
+
+                // Parse semua properti yang mungkin berupa string JSON
+                const parsedDiets = parseJsonString(apiData.diets, []);
+                const parsedSelectedMeals = parseJsonString(apiData.selectedMeals, []);
+                const parsedSelectedDishes = parseJsonString(apiData.selectedDishes, {});
+
+                setSaveMealPlan({
+                    ...apiData,
+                    diets: parsedDiets,
+                    selectedMeals: parsedSelectedMeals,
+                    selectedDishes: parsedSelectedDishes,
+                });
+                setMealPlan(apiData.mealPlan); // mealPlan sendiri biasanya sudah objek/array
+                setLatestFormData({
+                    minCalories: apiData.minCalories,
+                    maxCalories: apiData.maxCalories,
+                    timeFrame: apiData.timeFrame,
+                    diets: parsedDiets,
+                    selectedMeals: parsedSelectedMeals,
+                    selectedDishes: parsedSelectedDishes,
                 });
             } else {
                 setSaveMealPlan(null);
@@ -96,40 +143,47 @@ const Meal = () => {
         const init = async () => {
             const currentToken = await refreshToken();
             if (currentToken) {
-                getCalorieAnalysis(currentToken);
-                fetchSavedMealPlan(currentToken);
+                await getCalorieAnalysis(currentToken);
+                await fetchSavedMealPlan(currentToken);
             }
         }
-
         init();
     }, []);
 
     const handleGenerate = async (formData) => {
         setLoading(true);
         setMealPlan(null);
-        // Penting: Bersihkan selectedDishes agar hanya berisi yang benar-benar dipilih di selectedMeals
+
+        // Pastikan diets, selectedMeals, selectedDishes dari formData juga di-parse jika perlu (misal dari MealPlanForm)
+        const parsedFormData = {
+            ...formData,
+            diets: parseJsonString(formData.diets, []),
+            selectedMeals: parseJsonString(formData.selectedMeals, []),
+            selectedDishes: parseJsonString(formData.selectedDishes, {}),
+        };
+
         const cleanedSelectedDishes = {};
-        formData.selectedMeals.forEach(meal => {
-            if (formData.selectedDishes[meal]) {
-                cleanedSelectedDishes[meal] = formData.selectedDishes[meal];
+        parsedFormData.selectedMeals.forEach(meal => {
+            if (parsedFormData.selectedDishes && parsedFormData.selectedDishes[meal]) {
+                cleanedSelectedDishes[meal] = parsedFormData.selectedDishes[meal];
             }
         });
 
         const payload = {
-            ...formData,
-            minCalories: Number(formData.minCalories),
-            maxCalories: Number(formData.maxCalories),
-            timeFrame: Number(formData.timeFrame),
-            selectedDishes: cleanedSelectedDishes,
+            ...parsedFormData,
+            minCalories: Number(parsedFormData.minCalories),
+            maxCalories: Number(parsedFormData.maxCalories),
+            timeFrame: Number(parsedFormData.timeFrame),
+            selectedDishes: cleanedSelectedDishes, // Gunakan yang sudah dibersihkan dan dipastikan objek
         };
 
-        setLatestFormData(payload);
+        setLatestFormData(payload); // Simpan payload yang sudah di-parse dan dibersihkan
 
         try {
             const response = await axiosJwt.post(`${API_URL.GET_RECOMMENDATION}`, payload);
 
             if (response.data && response.data.status === 'success') {
-                setMealPlan(response.data.data);
+                setMealPlan(response.data.data); // Asumsi mealPlan dari API sudah dalam format yang benar
                 setSelectedTab('view');
                 return {
                     success: true,
@@ -156,7 +210,6 @@ const Meal = () => {
                     message = data.message || 'Terjadi kesalahan server.';
                 }
             }
-
             return {
                 success: false,
                 message: message,
@@ -167,18 +220,15 @@ const Meal = () => {
         }
     };
 
-
     const handleSaveMealPlan = async () => {
-        // If there's no mealPlan generated or no form data to save, return
         if (!mealPlan || !latestFormData) {
             window.Swal.fire('Peringatan', 'Tidak ada meal plan untuk disimpan atau data form tidak ditemukan.', 'warning');
             return;
         }
 
-        // Penting: Bersihkan selectedDishes agar hanya berisi yang benar-benar dipilih di selectedMeals
         const cleanedSelectedDishes = {};
         latestFormData.selectedMeals.forEach(meal => {
-            if (latestFormData.selectedDishes[meal]) {
+            if (latestFormData.selectedDishes && latestFormData.selectedDishes[meal]) {
                 cleanedSelectedDishes[meal] = latestFormData.selectedDishes[meal];
             }
         });
@@ -192,8 +242,9 @@ const Meal = () => {
         });
 
         try {
+            // Saat mengirim ke backend, stringify sekali saja
             const dataToSave = {
-                mealPlan: mealPlan, // mealPlan yang sedang ditampilkan
+                mealPlan: mealPlan,
                 minCalories: latestFormData.minCalories,
                 maxCalories: latestFormData.maxCalories,
                 timeFrame: latestFormData.timeFrame,
@@ -202,6 +253,7 @@ const Meal = () => {
                 selectedDishes: cleanedSelectedDishes,
             };
 
+
             const response = await axiosJwt.post(`${API_URL.SAVE_MEAL_PLAN}`, dataToSave);
             window.Swal.close();
             window.Swal.fire(
@@ -209,18 +261,30 @@ const Meal = () => {
                 response.data.message,
                 'success'
             );
-            // Setelah berhasil menyimpan/mengupdate, update savedMealPlan dengan data terbaru dari respons
-            setSaveMealPlan(response.data.data);
-            setMealPlan(response.data.data.mealPlan); // Pastikan mealPlan yang ditampilkan adalah yang tersimpan
-            // Set latestFormData agar sesuai dengan data yang baru tersimpan (untuk edit selanjutnya)
-            setLatestFormData({
-                minCalories: response.data.data.minCalories,
-                maxCalories: response.data.data.maxCalories,
-                timeFrame: response.data.data.timeFrame,
-                diets: response.data.data.diets,
-                selectedMeals: response.data.data.selectedMeals,
-                selectedDishes: response.data.data.selectedDishes,
+
+            const apiData = response.data.data;
+            // Parse kembali respons dari API setelah menyimpan, gunakan fungsi yang lebih tangguh
+            const parsedDiets = parseJsonString(apiData.diets, []);
+            const parsedSelectedMeals = parseJsonString(apiData.selectedMeals, []);
+            const parsedSelectedDishes = parseJsonString(apiData.selectedDishes, {});
+
+            setSaveMealPlan({
+                ...apiData,
+                diets: parsedDiets,
+                selectedMeals: parsedSelectedMeals,
+                selectedDishes: parsedSelectedDishes,
             });
+            setMealPlan(apiData.mealPlan);
+
+            setLatestFormData({
+                minCalories: apiData.minCalories,
+                maxCalories: apiData.maxCalories,
+                timeFrame: apiData.timeFrame,
+                diets: parsedDiets,
+                selectedMeals: parsedSelectedMeals,
+                selectedDishes: parsedSelectedDishes,
+            });
+
         } catch (error) {
             window.Swal.close();
             window.Swal.fire(
@@ -235,6 +299,7 @@ const Meal = () => {
     const isCurrentMealPlanSaved = () => {
         if (!mealPlan || !saveMealPlan?.mealPlan) return false;
 
+        // saveMealPlan sudah di-parse di fetchSavedMealPlan, jadi perbandingan harusnya langsung benar
         const areFormsEqual =
             latestFormData?.minCalories === saveMealPlan.minCalories &&
             latestFormData?.maxCalories === saveMealPlan.maxCalories &&
@@ -251,14 +316,12 @@ const Meal = () => {
     return (
         <div className="container mt-5">
             <div className="row">
-                {/* Sidebar */}
                 <div className="col-md-3 mb-3">
                     <div className="list-group">
                         <button
                             className={`list-group-item list-group-item-action ${selectedTab === 'view' ? 'active' : ''}`}
                             onClick={() => {
                                 setSelectedTab('view');
-                                // Jika ada meal plan yang tersimpan, tampilkan itu di tab 'view'
                                 if (saveMealPlan) {
                                     setMealPlan(saveMealPlan.mealPlan);
                                 } else {
@@ -272,25 +335,29 @@ const Meal = () => {
                             className={`list-group-item list-group-item-action ${selectedTab === 'form' ? 'active' : ''}`}
                             onClick={() => {
                                 setSelectedTab('form');
-                                // Saat beralih ke form, pastikan `mealPlan` di-reset ke `null`
-                                // agar `initialFormData` di `MealPlanForm` yang berlaku
                                 setMealPlan(null);
                             }}
                         >
                             {saveMealPlan ? 'Edit Meal Plan Anda' : 'Buat Meal Plan Baru'}
                         </button>
                     </div>
+
+                    {saveMealPlan && (
+                        <div className="mt-3">
+                            <RequestCard
+                                formData={saveMealPlan}
+                            />
+                        </div>
+                    )}
                 </div>
 
-                {/* Main Content */}
                 <div className="col-md-9">
                     {selectedTab === 'view' && (
-                        <div className="position-relative"> {/* Tambahkan div untuk relative positioning */}
+                        <div className="position-relative">
                             <div className="d-flex justify-content-between align-items-center mb-3">
                                 <h3 className="mb-0">Meal Plan Anda</h3>
-                                {/* Tombol Edit / Simpan */}
-                                {loading ? null : ( // Sembunyikan tombol jika loading
-                                    mealPlan ? ( // Tampilkan tombol jika ada mealPlan yang ditampilkan
+                                {loading ? null : (
+                                    mealPlan ? (
                                         saveMealPlan && isCurrentMealPlanSaved() ? (
                                             <button
                                                 className="btn btn-warning btn-sm"
@@ -313,7 +380,7 @@ const Meal = () => {
                                     ) : null
                                 )}
                             </div>
-                            {loading && !mealPlan ? ( // Tampilkan loading saat fetch saved meal plan atau generate baru
+                            {loading && !mealPlan ? (
                                 <div className="text-center mt-5">
                                     <div className="spinner-border text-primary" role="status">
                                         <span className="visually-hidden">Loading...</span>
@@ -321,8 +388,7 @@ const Meal = () => {
                                     <p>Memuat meal plan...</p>
                                 </div>
                             ) : (
-                                mealPlan ? ( // Gunakan mealPlan (hasil generate atau saved)
-                                    // Konten meal card, wrap dalam div dengan max-height dan overflow-y
+                                mealPlan ? (
                                     <div style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
                                         <MealCard data={mealPlan} />
                                     </div>
@@ -337,12 +403,11 @@ const Meal = () => {
 
                     {selectedTab === 'form' && (
                         <>
-                            {/* Pass savedMealPlan.data ke initialFormData jika ada */}
                             <MealPlanForm
                                 onGenerate={handleGenerate}
                                 loading={loading}
                                 initialCalories={calorieAnalysis}
-                                initialFormData={saveMealPlan} // Mengirimkan savedMealPlan sebagai initialFormData
+                                initialFormData={latestFormData || saveMealPlan}
                             />
                         </>
                     )}

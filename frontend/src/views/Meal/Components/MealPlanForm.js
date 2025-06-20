@@ -6,7 +6,7 @@ const MealPlanForm = ({ onGenerate, loading, initialCalories, initialFormData })
     const [form, setForm] = useState({
         minCalories: '',
         maxCalories: '',
-        timeFrame: '1',
+        timeFrame: 1,
         diets: [],
         selectedMeals: [],
         selectedDishes: {},
@@ -33,9 +33,9 @@ const MealPlanForm = ({ onGenerate, loading, initialCalories, initialFormData })
     useEffect(() => {
         if (initialFormData) {
             const newFormState = {
-                minCalories: initialFormData.minCalories || '',
-                maxCalories: initialFormData.maxCalories || '',
-                timeFrame: initialFormData.timeFrame || '',
+                minCalories: initialFormData.minCalories !== undefined ? initialFormData.minCalories : '',
+                maxCalories: initialFormData.maxCalories !== undefined ? initialFormData.maxCalories : '',
+                timeFrame: initialFormData.timeFrame !== undefined ? initialFormData.timeFrame : 1,
                 diets: Array.isArray(initialFormData.diets) ? initialFormData.diets : [],
                 selectedMeals: Array.isArray(initialFormData.selectedMeals) ? initialFormData.selectedMeals : [],
                 selectedDishes: typeof initialFormData.selectedDishes === 'object' && !Array.isArray(initialFormData.selectedDishes)
@@ -44,12 +44,30 @@ const MealPlanForm = ({ onGenerate, loading, initialCalories, initialFormData })
             };
 
             setForm(newFormState);
+            setStep(0);
+        } else {
+            // Jika initialFormData null (misal: saat membuat meal plan baru dan tidak ada data tersimpan)
+            // Reset form ke nilai default (atau nilai dari initialCalories jika ada)
+            setForm({
+                minCalories: initialCalories?.amb !== undefined ? Math.round(initialCalories.amb) : '',
+                maxCalories: initialCalories?.tdd !== undefined ? Math.round(initialCalories.tdd) : '',
+                timeFrame: 1, // Kembali ke default number
+                diets: [],
+                selectedMeals: [],
+                selectedDishes: {},
+            });
+            setStep(0);
         }
-    }, [initialFormData]);
+    }, [initialFormData, initialCalories]);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
+        const { name, value, type } = e.target;
+        setForm((prev) => (
+            {
+                ...prev,
+                [name]: type === 'number' ? Number(value) : value
+            }
+        ));
     };
 
     const handleCheckboxChange = (e, key) => {
@@ -149,61 +167,75 @@ const MealPlanForm = ({ onGenerate, loading, initialCalories, initialFormData })
                     </>
                 );
             case 1:
+                const dietOptions = [
+                    { value: 'keto', label: 'Keto' },
+                    { value: 'LOW_CARB', label: 'Low-Carb' },
+                    { value: 'LOW_FAT', label: 'Low-fat' },
+                    { value: 'HIGH_PROTEIN', label: 'High-Protein' },
+                    { value: 'HIGH_FIBER', label: 'High-Fiber' },
+                ];
                 return (
                     <>
                         <label className="form-label">Diet Preferences</label>
-                        <div className="form-check">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                value="vegetarian"
-                                checked={form.diets.includes('vegetarian')}
-                                onChange={(e) => handleCheckboxChange(e, 'diets')}
-                            />
-                            <label className="form-check-label">Vegetarian</label>
-                        </div>
-                        <div className="form-check">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                value="vegan"
-                                checked={form.diets.includes('vegan')}
-                                onChange={(e) => handleCheckboxChange(e, 'diets')}
-                            />
-                            <label className="form-check-label">Vegan</label>
-                        </div>
-                        {/* Add more diets if needed */}
+                        {dietOptions.map((diet) => (
+                            <div key={diet.value} className="form-check">
+                                <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    value={diet.value}
+                                    checked={form.diets.includes(diet.value)}
+                                    onChange={(e) => handleCheckboxChange(e, 'diets')}
+                                />
+                                <label className="form-check-label">{diet.label}</label>
+                            </div>
+                        ))}
                     </>
                 );
             case 2:
                 console.log("MealPlanForm: Rendering Step 2. Current form.selectedMeals:", form.selectedMeals);
                 console.log("MealPlanForm: Current form.selectedDishes:", form.selectedDishes);
-                const mealOptions = ['breakfast', 'lunch', 'dinner'];
+                const mealOptions = [
+                    { value: 'breakfast', label: 'Breakfast' },
+                    { value: 'lunch', label: 'Lunch' },
+                    { value: 'dinner', label: 'Dinner' },
+                ];
                 const dishOptions = {
-                    breakfast: ['main course', 'Oatmeal', 'Omelette'],
-                    lunch: ['main course', 'Grilled Chicken', 'Salad'],
-                    dinner: ['main course', 'Soup', 'Steamed Vegetables'],
+                    breakfast: [
+                        { value: 'main course', label: 'Main Course' },
+                        { value: 'outmeal', label: 'Outmeal' },
+                        { value: 'egg', label: 'Egg' },
+                    ],
+                    lunch: [
+                        { value: 'main course', label: 'Main Course' },
+                        { value: 'seafood', label: 'Seafood' },
+                        { value: 'soup', label: 'Soup' },
+                    ],
+                    dinner: [
+                        { value: 'main course', label: 'Main Course' },
+                        { value: 'desserts', label: 'Desserts' },
+                        { value: 'salad', label: 'Salad' },
+                    ],
                 };
 
                 return (
                     <>
-                        <label className="form-label">Select Meals</label>
+                        <label className="form-label">Pilih Jenis Makanan (Minimal 2, Maksimal 3)</label>
                         {mealOptions.map((meal) => (
-                            <div className="form-check" key={meal}>
+                            <div key={meal.value} className="form-check">
                                 <input
                                     className="form-check-input"
                                     type="checkbox"
-                                    value={meal}
-                                    checked={form.selectedMeals.includes(meal)}
+                                    value={meal.value}
+                                    checked={form.selectedMeals.includes(meal.value)}
                                     onChange={(e) => handleCheckboxChange(e, 'selectedMeals')}
                                 />
-                                <label className="form-check-label">{meal}</label>
+                                <label className="form-check-label">{meal.label}</label>
                             </div>
                         ))}
 
                         {form.selectedMeals.map((meal) => (
                             <div className="mt-3" key={meal}>
-                                <label className="form-label">Dish for {meal}</label>
+                                <label className="form-label">Pilih Dish untk {meal.charAt(0).toUpperCase() + meal.slice(1)}</label>
                                 <select
                                     className="form-select"
                                     value={form.selectedDishes[meal] || ''}
@@ -211,8 +243,8 @@ const MealPlanForm = ({ onGenerate, loading, initialCalories, initialFormData })
                                 >
                                     <option value="">Pilih Dish</option>
                                     {dishOptions[meal].map((dish) => (
-                                        <option key={dish} value={dish}>
-                                            {dish}
+                                        <option key={dish.value} value={dish.value}>
+                                            {dish.label}
                                         </option>
                                     ))}
                                 </select>
