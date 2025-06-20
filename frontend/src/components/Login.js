@@ -22,7 +22,7 @@ const Login = () => {
             window.Swal.fire({
                 icon: 'success',
                 title: 'Berhasil',
-                text: 'Login berhasil. Selamat datang kembali!',
+                text: response.data.message,
                 confirmButtonText: 'OK',
                 confirmButtonColor: '#27ae60',
             }).then(() => {

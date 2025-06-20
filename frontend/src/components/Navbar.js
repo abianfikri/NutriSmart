@@ -19,10 +19,10 @@ const Navbar = () => {
 
         if (result.isConfirmed) {
             try {
-                await axios.delete(`${API_URL.LOGOUT}`);
+                const response = await axios.delete(`${API_URL.LOGOUT}`);
                 window.Swal.fire({
                     title: 'Logout',
-                    text: 'Anda telah berhasil logout',
+                    text: response.data.message,
                     icon: 'success',
                     confirmButtonText: 'OK'
                 }).then(() => navigate('/'));
