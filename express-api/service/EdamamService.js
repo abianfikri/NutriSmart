@@ -54,7 +54,7 @@ export async function generateMealPlan({
     const response = await axios.post(url, payload, {
         headers: {
             'Content-Type': 'application/json',
-            'Edamam-Account-User': 'meal-plan'
+            'Edamam-Account-User': 'nutrismart'
         },
         params: {
             app_id: process.env.EDAMAM_APP_ID,
@@ -80,7 +80,7 @@ export async function generateMealPlan({
                     const detailRes = await axios.get(detailUrl, {
                         headers: {
                             'Content-Type': 'application/json',
-                            'Edamam-Account-User': 'meal-plan'
+                            'Edamam-Account-User': 'nutrismart'
                         }
                     });
 
