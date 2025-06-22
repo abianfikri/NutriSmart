@@ -16,43 +16,79 @@ const MealPlanForm = ({ onGenerate, loading, initialCalories, initialFormData })
 
     const steps = ['Kalori & Waktu', 'Diet', 'Meal & Dish', 'Konfirmasi'];
 
-    // Efek untuk mengisi form dengan initialFormData (dari saved meal plan)
-    // atau initialCalories (dari analisis) saat komponen dimuat atau props berubah
     useEffect(() => {
-        let newMinCalories = '';
-        let newMaxCalories = '';
-        let newTimeFrame = 1;
-        let newDiets = [];
-        let newSelectedMeals = [];
-        let newSelectedDishes = {};
+        if (initialCalories) {
+            const ambValue = initialCalories.amb !== undefined ? Math.round(initialCalories.amb) : '';
+            const tddValue = initialCalories.tdd !== undefined ? Math.round(initialCalories.tdd) : '';
 
-        if (initialFormData) {
-            // Jika ada data form yang tersimpan (sedang edit meal plan), gunakan itu
-            newMinCalories = initialFormData.minCalories !== undefined ? initialFormData.minCalories : '';
-            newMaxCalories = initialFormData.maxCalories !== undefined ? initialFormData.maxCalories : '';
-            newTimeFrame = initialFormData.timeFrame !== undefined ? initialFormData.timeFrame : 1;
-            newDiets = Array.isArray(initialFormData.diets) ? initialFormData.diets : [];
-            newSelectedMeals = Array.isArray(initialFormData.selectedMeals) ? initialFormData.selectedMeals : [];
-            newSelectedDishes = typeof initialFormData.selectedDishes === 'object' && !Array.isArray(initialFormData.selectedDishes)
-                ? initialFormData.selectedDishes
-                : {};
-        } else if (initialCalories) {
-            // Jika tidak ada initialFormData, tapi ada initialCalories (buat baru / pertama kali), gunakan itu
-            newMinCalories = initialCalories.amb !== undefined ? Math.round(initialCalories.amb) : '';
-            newMaxCalories = initialCalories.tdd !== undefined ? Math.round(initialCalories.tdd) : '';
+            setForm((prev) => ({
+                ...prev,
+                minCalories: ambValue,
+                maxCalories: tddValue,
+            }));
         }
+    }, [initialCalories]);
 
-        setForm({
-            minCalories: newMinCalories,
-            maxCalories: newMaxCalories,
-            timeFrame: newTimeFrame,
-            diets: newDiets,
-            selectedMeals: newSelectedMeals,
-            selectedDishes: newSelectedDishes,
-        });
-        setStep(0); // Selalu kembali ke step 0 saat data awal dimuat/diperbarui
+    // Tambahkan useEffect untuk mengisi form dengan initialFormData
+    useEffect(() => {
+        if (initialFormData) {
+            const newFormState = {
+                minCalories: initialFormData.minCalories !== undefined ? initialFormData.minCalories : '',
+                maxCalories: initialFormData.maxCalories !== undefined ? initialFormData.maxCalories : '',
+                timeFrame: initialFormData.timeFrame !== undefined ? initialFormData.timeFrame : 1,
+                diets: Array.isArray(initialFormData.diets) ? initialFormData.diets : [],
+                selectedMeals: Array.isArray(initialFormData.selectedMeals) ? initialFormData.selectedMeals : [],
+                selectedDishes: typeof initialFormData.selectedDishes === 'object' && !Array.isArray(initialFormData.selectedDishes)
+                    ? initialFormData.selectedDishes
+                    : {},
+            };
+
+            setForm(newFormState);
+            setStep(0);
+        } else {
+            // Jika initialFormData null (misal: saat membuat meal plan baru dan tidak ada data tersimpan)
+            // Reset form ke nilai default (atau nilai dari initialCalories jika ada)
+            setForm({
+                minCalories: initialCalories?.amb !== undefined ? Math.round(initialCalories.amb) : '',
+                maxCalories: initialCalories?.tdd !== undefined ? Math.round(initialCalories.tdd) : '',
+                timeFrame: 1, // Kembali ke default number
+                diets: [],
+                selectedMeals: [],
+                selectedDishes: {},
+            });
+            setStep(0);
+        }
     }, [initialFormData, initialCalories]);
 
+    // --- MODIFIKASI DIMULAI DI SINI ---
+    useEffect(() => {
+        setForm(prevForm => {
+            const newSelectedDishes = { ...prevForm.selectedDishes };
+            // Hapus dish yang meal-nya tidak lagi dipilih
+            Object.keys(newSelectedDishes).forEach(meal => {
+                if (!prevForm.selectedMeals.includes(meal)) {
+                    delete newSelectedDishes[meal];
+                }
+            });
+            // Pastikan setiap meal yang dipilih memiliki entri di selectedDishes
+            prevForm.selectedMeals.forEach(meal => {
+                if (!(meal in newSelectedDishes)) {
+                    newSelectedDishes[meal] = ''; // Atau set ke nilai default dish jika ada
+                }
+            });
+
+            // Hanya update jika ada perubahan nyata untuk menghindari render berlebihan
+            if (JSON.stringify(newSelectedDishes) !== JSON.stringify(prevForm.selectedDishes)) {
+                console.log("MealPlanForm: selectedDishes updated based on selectedMeals. New state:", newSelectedDishes);
+                return {
+                    ...prevForm,
+                    selectedDishes: newSelectedDishes,
+                };
+            }
+            return prevForm;
+        });
+    }, [form.selectedMeals]);
+    // --- MODIFIKASI BERAKHIR DI SINI ---
 
     const handleChange = (e) => {
         const { name, value, type } = e.target;
@@ -69,6 +105,33 @@ const MealPlanForm = ({ onGenerate, loading, initialCalories, initialFormData })
         setForm((prev) => {
             const current = new Set(prev[key]);
             checked ? current.add(value) : current.delete(value);
+
+            // Jika ini adalah checkbox 'selectedMeals', kita perlu juga menyesuaikan selectedDishes
+            if (key === 'selectedMeals') {
+                const newSelectedMeals = Array.from(current);
+                const newSelectedDishes = { ...prev.selectedDishes };
+
+                // Hapus dishes untuk meal yang tidak lagi dipilih
+                Object.keys(newSelectedDishes).forEach(meal => {
+                    if (!newSelectedMeals.includes(meal)) {
+                        delete newSelectedDishes[meal];
+                    }
+                });
+
+                // Tambahkan entri kosong atau default untuk meal baru yang dipilih
+                newSelectedMeals.forEach(meal => {
+                    if (!(meal in newSelectedDishes)) {
+                        newSelectedDishes[meal] = ''; // Inisialisasi dengan string kosong atau dish default
+                    }
+                });
+
+                return {
+                    ...prev,
+                    selectedMeals: newSelectedMeals,
+                    selectedDishes: newSelectedDishes,
+                };
+            }
+
             return { ...prev, [key]: Array.from(current) };
         });
     };
@@ -272,7 +335,7 @@ const MealPlanForm = ({ onGenerate, loading, initialCalories, initialFormData })
 
                         {form.selectedMeals.map((meal) => (
                             <div className="mt-3" key={meal}>
-                                <label className="form-label">Pilih Dish untk {meal.charAt(0).toUpperCase() + meal.slice(1)}</label>
+                                <label className="form-label">Pilih Dish untuk {meal.charAt(0).toUpperCase() + meal.slice(1)}</label>
                                 <select
                                     className="form-select"
                                     value={form.selectedDishes[meal] || ''}
@@ -325,6 +388,7 @@ const MealPlanForm = ({ onGenerate, loading, initialCalories, initialFormData })
                     </button>
                 )}
             </div>
+
 
             <ConfirmationModal
                 show={showConfirm}
