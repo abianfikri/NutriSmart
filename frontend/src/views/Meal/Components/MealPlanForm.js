@@ -16,49 +16,43 @@ const MealPlanForm = ({ onGenerate, loading, initialCalories, initialFormData })
 
     const steps = ['Kalori & Waktu', 'Diet', 'Meal & Dish', 'Konfirmasi'];
 
+    // Efek untuk mengisi form dengan initialFormData (dari saved meal plan)
+    // atau initialCalories (dari analisis) saat komponen dimuat atau props berubah
     useEffect(() => {
-        if (initialCalories) {
-            const ambValue = initialCalories.amb !== undefined ? Math.round(initialCalories.amb) : '';
-            const tddValue = initialCalories.tdd !== undefined ? Math.round(initialCalories.tdd) : '';
+        let newMinCalories = '';
+        let newMaxCalories = '';
+        let newTimeFrame = 1;
+        let newDiets = [];
+        let newSelectedMeals = [];
+        let newSelectedDishes = {};
 
-            setForm((prev) => ({
-                ...prev,
-                minCalories: ambValue,
-                maxCalories: tddValue,
-            }));
-        }
-    }, [initialCalories]);
-
-    // Tambahkan useEffect untuk mengisi form dengan initialFormData
-    useEffect(() => {
         if (initialFormData) {
-            const newFormState = {
-                minCalories: initialFormData.minCalories !== undefined ? initialFormData.minCalories : '',
-                maxCalories: initialFormData.maxCalories !== undefined ? initialFormData.maxCalories : '',
-                timeFrame: initialFormData.timeFrame !== undefined ? initialFormData.timeFrame : 1,
-                diets: Array.isArray(initialFormData.diets) ? initialFormData.diets : [],
-                selectedMeals: Array.isArray(initialFormData.selectedMeals) ? initialFormData.selectedMeals : [],
-                selectedDishes: typeof initialFormData.selectedDishes === 'object' && !Array.isArray(initialFormData.selectedDishes)
-                    ? initialFormData.selectedDishes
-                    : {},
-            };
-
-            setForm(newFormState);
-            setStep(0);
-        } else {
-            // Jika initialFormData null (misal: saat membuat meal plan baru dan tidak ada data tersimpan)
-            // Reset form ke nilai default (atau nilai dari initialCalories jika ada)
-            setForm({
-                minCalories: initialCalories?.amb !== undefined ? Math.round(initialCalories.amb) : '',
-                maxCalories: initialCalories?.tdd !== undefined ? Math.round(initialCalories.tdd) : '',
-                timeFrame: 1, // Kembali ke default number
-                diets: [],
-                selectedMeals: [],
-                selectedDishes: {},
-            });
-            setStep(0);
+            // Jika ada data form yang tersimpan (sedang edit meal plan), gunakan itu
+            newMinCalories = initialFormData.minCalories !== undefined ? initialFormData.minCalories : '';
+            newMaxCalories = initialFormData.maxCalories !== undefined ? initialFormData.maxCalories : '';
+            newTimeFrame = initialFormData.timeFrame !== undefined ? initialFormData.timeFrame : 1;
+            newDiets = Array.isArray(initialFormData.diets) ? initialFormData.diets : [];
+            newSelectedMeals = Array.isArray(initialFormData.selectedMeals) ? initialFormData.selectedMeals : [];
+            newSelectedDishes = typeof initialFormData.selectedDishes === 'object' && !Array.isArray(initialFormData.selectedDishes)
+                ? initialFormData.selectedDishes
+                : {};
+        } else if (initialCalories) {
+            // Jika tidak ada initialFormData, tapi ada initialCalories (buat baru / pertama kali), gunakan itu
+            newMinCalories = initialCalories.amb !== undefined ? Math.round(initialCalories.amb) : '';
+            newMaxCalories = initialCalories.tdd !== undefined ? Math.round(initialCalories.tdd) : '';
         }
+
+        setForm({
+            minCalories: newMinCalories,
+            maxCalories: newMaxCalories,
+            timeFrame: newTimeFrame,
+            diets: newDiets,
+            selectedMeals: newSelectedMeals,
+            selectedDishes: newSelectedDishes,
+        });
+        setStep(0); // Selalu kembali ke step 0 saat data awal dimuat/diperbarui
     }, [initialFormData, initialCalories]);
+
 
     const handleChange = (e) => {
         const { name, value, type } = e.target;
@@ -128,6 +122,31 @@ const MealPlanForm = ({ onGenerate, loading, initialCalories, initialFormData })
         }
     };
 
+    // Fungsi baru untuk memperbarui nilai kalori di form dengan analisis terbaru
+    const updateCaloriesFromAnalysis = () => {
+        if (initialCalories) {
+            setForm(prev => ({
+                ...prev,
+                minCalories: Math.round(initialCalories.amb),
+                maxCalories: Math.round(initialCalories.tdd),
+            }));
+            window.Swal.fire(
+                'Berhasil',
+                'Nilai kalori di form telah diperbarui sesuai analisis terbaru.',
+                'success'
+            );
+        }
+    };
+
+    // Fungsi untuk mengecek apakah kalori di form berbeda dengan analisis terbaru
+    const areFormCaloriesOutdated = () => {
+        if (!initialCalories || form.minCalories === '' || form.maxCalories === '') return false;
+
+        const ambFromAnalysis = Math.round(initialCalories.amb);
+        const tddFromAnalysis = Math.round(initialCalories.tdd);
+
+        return Number(form.minCalories) !== ambFromAnalysis || Number(form.maxCalories) !== tddFromAnalysis;
+    };
 
     const renderStep = () => {
         switch (step) {
@@ -154,6 +173,24 @@ const MealPlanForm = ({ onGenerate, loading, initialCalories, initialFormData })
                                 onChange={handleChange}
                             />
                         </div>
+
+                        {/* Tombol untuk memperbarui kalori, hanya tampil jika ada perbedaan */}
+                        {initialCalories && areFormCaloriesOutdated() && (
+                            <div className="mb-3">
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-warning text-dark w-100"
+                                    onClick={updateCaloriesFromAnalysis}
+                                >
+                                    <i className="bi bi-arrow-clockwise me-2"></i>
+                                    Perbarui Kalori dari Analisis Terbaru
+                                </button>
+                                <small className="form-text text-muted">
+                                    AMB/TDD saat ini: {Math.round(initialCalories.amb)}-{Math.round(initialCalories.tdd)}
+                                </small>
+                            </div>
+                        )}
+
                         <div className="mb-3">
                             <label className="form-label">Time Frame (days)</label>
                             <input
@@ -289,7 +326,6 @@ const MealPlanForm = ({ onGenerate, loading, initialCalories, initialFormData })
                 )}
             </div>
 
-
             <ConfirmationModal
                 show={showConfirm}
                 onHide={() => setShowConfirm(false)}
@@ -298,7 +334,6 @@ const MealPlanForm = ({ onGenerate, loading, initialCalories, initialFormData })
             />
         </div>
     );
-
 };
 
 export default MealPlanForm;

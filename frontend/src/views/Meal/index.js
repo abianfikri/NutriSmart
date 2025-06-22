@@ -1,11 +1,10 @@
-// src/pages/Meal.js (atau lokasi file Meal.js Anda)
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
-import MealPlanForm from './Components/MealPlanForm'; // Perbaiki path jika perlu
-import MealCard from './Components/MealCard'; // Perbaiki path jika perlu
-import RequestCard from './Components/RequestCard'; // Perbaiki path jika perlu
-import { API_URL } from '../../api'; // Perbaiki path jika perlu
+import MealPlanForm from './Components/MealPlanForm';
+import MealCard from './Components/MealCard';
+import RequestCard from './Components/RequestCard';
+import { API_URL } from '../../api';
 
 const Meal = () => {
     const [token, setToken] = useState('');
@@ -15,7 +14,7 @@ const Meal = () => {
     const [loading, setLoading] = useState(false);
     const [selectedTab, setSelectedTab] = useState('view');
     const [calorieAnalysis, setCalorieAnalysis] = useState(null);
-    const [latestFormData, setLatestFormData] = useState(null);
+    const [latestFormData, setLatestFormData] = useState(null); // Data form terakhir yang digunakan untuk generate/simpan
 
     const refreshToken = async () => {
         try {
@@ -26,6 +25,7 @@ const Meal = () => {
             return res.data.accessToken;
         } catch (error) {
             console.error('Unauthorized', error);
+            return null;
         }
     };
 
@@ -56,6 +56,7 @@ const Meal = () => {
             setCalorieAnalysis(response.data.data);
         } catch (error) {
             console.error('Error fetching calorie analysis:', error);
+            setCalorieAnalysis(null);
         }
     }
 
@@ -64,7 +65,7 @@ const Meal = () => {
             try {
                 let parsed = JSON.parse(jsonString);
 
-                if (typeof parsed === 'string') {
+                if (typeof parsed === 'string') { // Handle double-parsed strings
                     try {
                         parsed = JSON.parse(parsed);
                     } catch (e) {
@@ -91,7 +92,6 @@ const Meal = () => {
         }
         return jsonString;
     };
-    // Ini adalah akhir dari fungsi helper parseJsonString
 
     const fetchSavedMealPlan = async (currentToken) => {
         setLoading(true);
@@ -104,18 +104,21 @@ const Meal = () => {
             if (response.data && response.data.data && response.data.status === 'success') {
                 const apiData = response.data.data;
 
-                // Parse semua properti yang mungkin berupa string JSON
                 const parsedDiets = parseJsonString(apiData.diets, []);
                 const parsedSelectedMeals = parseJsonString(apiData.selectedMeals, []);
                 const parsedSelectedDishes = parseJsonString(apiData.selectedDishes, {});
 
-                setSaveMealPlan({
+                const currentSavedData = {
                     ...apiData,
                     diets: parsedDiets,
                     selectedMeals: parsedSelectedMeals,
                     selectedDishes: parsedSelectedDishes,
-                });
-                setMealPlan(apiData.mealPlan); // mealPlan sendiri biasanya sudah objek/array
+                };
+
+                setSaveMealPlan(currentSavedData);
+                setMealPlan(apiData.mealPlan); // Tampilkan meal plan yang tersimpan saat pertama kali loading
+
+                // Pastikan latestFormData disetel saat meal plan disimpan dimuat
                 setLatestFormData({
                     minCalories: apiData.minCalories,
                     maxCalories: apiData.maxCalories,
@@ -124,6 +127,7 @@ const Meal = () => {
                     selectedMeals: parsedSelectedMeals,
                     selectedDishes: parsedSelectedDishes,
                 });
+
             } else {
                 setSaveMealPlan(null);
                 setMealPlan(null);
@@ -150,40 +154,36 @@ const Meal = () => {
         init();
     }, []);
 
+
     const handleGenerate = async (formData) => {
         setLoading(true);
-        setMealPlan(null);
+        setMealPlan(null); // Kosongkan meal plan saat generate baru
 
-        // Pastikan diets, selectedMeals, selectedDishes dari formData juga di-parse jika perlu (misal dari MealPlanForm)
-        const parsedFormData = {
+        const payload = {
             ...formData,
-            diets: parseJsonString(formData.diets, []),
-            selectedMeals: parseJsonString(formData.selectedMeals, []),
-            selectedDishes: parseJsonString(formData.selectedDishes, {}),
+            minCalories: Number(formData.minCalories),
+            maxCalories: Number(formData.maxCalories),
+            timeFrame: Number(formData.timeFrame),
         };
 
         const cleanedSelectedDishes = {};
-        parsedFormData.selectedMeals.forEach(meal => {
-            if (parsedFormData.selectedDishes && parsedFormData.selectedDishes[meal]) {
-                cleanedSelectedDishes[meal] = parsedFormData.selectedDishes[meal];
-            }
-        });
+        if (Array.isArray(formData.selectedMeals)) {
+            formData.selectedMeals.forEach(meal => {
+                if (formData.selectedDishes && formData.selectedDishes[meal]) {
+                    cleanedSelectedDishes[meal] = formData.selectedDishes[meal];
+                }
+            });
+        }
+        payload.selectedDishes = cleanedSelectedDishes;
 
-        const payload = {
-            ...parsedFormData,
-            minCalories: Number(parsedFormData.minCalories),
-            maxCalories: Number(parsedFormData.maxCalories),
-            timeFrame: Number(parsedFormData.timeFrame),
-            selectedDishes: cleanedSelectedDishes, // Gunakan yang sudah dibersihkan dan dipastikan objek
-        };
-
-        setLatestFormData(payload); // Simpan payload yang sudah di-parse dan dibersihkan
+        // Set latestFormData di sini karena ini adalah data yang baru saja digenerate
+        setLatestFormData(payload);
 
         try {
             const response = await axiosJwt.post(`${API_URL.GET_RECOMMENDATION}`, payload);
 
             if (response.data && response.data.status === 'success') {
-                setMealPlan(response.data.data); // Asumsi mealPlan dari API sudah dalam format yang benar
+                setMealPlan(response.data.data);
                 setSelectedTab('view');
                 return {
                     success: true,
@@ -227,11 +227,24 @@ const Meal = () => {
         }
 
         const cleanedSelectedDishes = {};
-        latestFormData.selectedMeals.forEach(meal => {
-            if (latestFormData.selectedDishes && latestFormData.selectedDishes[meal]) {
-                cleanedSelectedDishes[meal] = latestFormData.selectedDishes[meal];
-            }
-        });
+        if (Array.isArray(latestFormData.selectedMeals)) {
+            latestFormData.selectedMeals.forEach(meal => {
+                if (latestFormData.selectedDishes && latestFormData.selectedDishes[meal]) {
+                    cleanedSelectedDishes[meal] = latestFormData.selectedDishes[meal];
+                }
+            });
+        }
+
+        const dataToSave = {
+            mealPlan: mealPlan,
+            minCalories: latestFormData.minCalories,
+            maxCalories: latestFormData.maxCalories,
+            timeFrame: latestFormData.timeFrame,
+            diets: latestFormData.diets,
+            selectedMeals: latestFormData.selectedMeals,
+            selectedDishes: cleanedSelectedDishes,
+        };
+
 
         window.Swal.fire({
             title: 'Sedang menyimpan...',
@@ -242,18 +255,6 @@ const Meal = () => {
         });
 
         try {
-            // Saat mengirim ke backend, stringify sekali saja
-            const dataToSave = {
-                mealPlan: mealPlan,
-                minCalories: latestFormData.minCalories,
-                maxCalories: latestFormData.maxCalories,
-                timeFrame: latestFormData.timeFrame,
-                diets: latestFormData.diets,
-                selectedMeals: latestFormData.selectedMeals,
-                selectedDishes: cleanedSelectedDishes,
-            };
-
-
             const response = await axiosJwt.post(`${API_URL.SAVE_MEAL_PLAN}`, dataToSave);
             window.Swal.close();
             window.Swal.fire(
@@ -263,19 +264,21 @@ const Meal = () => {
             );
 
             const apiData = response.data.data;
-            // Parse kembali respons dari API setelah menyimpan, gunakan fungsi yang lebih tangguh
             const parsedDiets = parseJsonString(apiData.diets, []);
             const parsedSelectedMeals = parseJsonString(apiData.selectedMeals, []);
             const parsedSelectedDishes = parseJsonString(apiData.selectedDishes, {});
 
-            setSaveMealPlan({
+            const updatedSavedMealPlan = {
                 ...apiData,
                 diets: parsedDiets,
                 selectedMeals: parsedSelectedMeals,
                 selectedDishes: parsedSelectedDishes,
-            });
+            };
+
+            setSaveMealPlan(updatedSavedMealPlan); // Update saveMealPlan dengan data terbaru dari DB
             setMealPlan(apiData.mealPlan);
 
+            // Update latestFormData juga agar form konsisten dengan data yang baru saja disimpan
             setLatestFormData({
                 minCalories: apiData.minCalories,
                 maxCalories: apiData.maxCalories,
@@ -296,17 +299,17 @@ const Meal = () => {
         }
     }
 
+    // Membandingkan data form terbaru dengan data yang tersimpan untuk menentukan apakah sudah tersimpan
     const isCurrentMealPlanSaved = () => {
-        if (!mealPlan || !saveMealPlan?.mealPlan) return false;
+        if (!mealPlan || !saveMealPlan?.mealPlan || !latestFormData) return false;
 
-        // saveMealPlan sudah di-parse di fetchSavedMealPlan, jadi perbandingan harusnya langsung benar
         const areFormsEqual =
-            latestFormData?.minCalories === saveMealPlan.minCalories &&
-            latestFormData?.maxCalories === saveMealPlan.maxCalories &&
-            latestFormData?.timeFrame === saveMealPlan.timeFrame &&
-            JSON.stringify(latestFormData?.diets) === JSON.stringify(saveMealPlan.diets) &&
-            JSON.stringify(latestFormData?.selectedMeals) === JSON.stringify(saveMealPlan.selectedMeals) &&
-            JSON.stringify(latestFormData?.selectedDishes) === JSON.stringify(saveMealPlan.selectedDishes);
+            latestFormData.minCalories === saveMealPlan.minCalories &&
+            latestFormData.maxCalories === saveMealPlan.maxCalories &&
+            latestFormData.timeFrame === saveMealPlan.timeFrame &&
+            JSON.stringify(latestFormData.diets) === JSON.stringify(saveMealPlan.diets) &&
+            JSON.stringify(latestFormData.selectedMeals) === JSON.stringify(saveMealPlan.selectedMeals) &&
+            JSON.stringify(latestFormData.selectedDishes) === JSON.stringify(saveMealPlan.selectedDishes);
 
         const areMealPlansContentEqual = JSON.stringify(mealPlan) === JSON.stringify(saveMealPlan.mealPlan);
 
@@ -325,8 +328,18 @@ const Meal = () => {
                                 setSelectedTab('view');
                                 if (saveMealPlan) {
                                     setMealPlan(saveMealPlan.mealPlan);
+                                    // Pastikan latestFormData juga sesuai dengan saveMealPlan saat kembali ke view
+                                    setLatestFormData({
+                                        minCalories: saveMealPlan.minCalories,
+                                        maxCalories: saveMealPlan.maxCalories,
+                                        timeFrame: saveMealPlan.timeFrame,
+                                        diets: saveMealPlan.diets,
+                                        selectedMeals: saveMealPlan.selectedMeals,
+                                        selectedDishes: saveMealPlan.selectedDishes,
+                                    });
                                 } else {
                                     setMealPlan(null);
+                                    setLatestFormData(null); // Reset jika tidak ada saveMealPlan
                                 }
                             }}
                         >
@@ -337,13 +350,13 @@ const Meal = () => {
                             style={selectedTab === 'form' ? { backgroundColor: '#2ecc71', color: 'white', borderColor: '#2ecc71' } : {}}
                             onClick={() => {
                                 setSelectedTab('form');
-                                setMealPlan(null);
+                                setMealPlan(null); // Clear mealPlan in form tab
+                                // latestFormData akan dihandle oleh prop initialFormData di MealPlanForm
                             }}
                         >
                             {saveMealPlan ? 'Edit Meal Plan Anda' : 'Buat Meal Plan Baru'}
                         </button>
                     </div>
-
 
                     {saveMealPlan && (
                         <div className="mt-3">
@@ -366,13 +379,14 @@ const Meal = () => {
                                                 className="btn btn-outline-success btn-sm"
                                                 onClick={() => {
                                                     setSelectedTab('form');
-                                                    setMealPlan(null);
+                                                    setMealPlan(null); // Clear meal plan for form view
                                                 }}
                                             >
                                                 Edit Meal Plan
                                             </button>
                                         ) : (
                                             <button
+                                                type="button"
                                                 className="btn text-white btn-sm"
                                                 style={{ backgroundColor: '#2ecc71', border: 'none' }}
                                                 onClick={handleSaveMealPlan}
