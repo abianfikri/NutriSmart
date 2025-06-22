@@ -238,6 +238,7 @@ const Profile = () => {
                                 age={age}
                                 weight={weight}
                                 height={height}
+                                activityLevel={activityLevel}
                                 tddeInfo={calorieAnalysisData}
                             />
                         )}

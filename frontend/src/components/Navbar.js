@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, NavLink } from 'react-router-dom';
-import { API_URL, BASE_URL } from '../api';
+import { API_URL } from '../api';
 
 const Navbar = () => {
     const navigate = useNavigate();
@@ -39,10 +39,16 @@ const Navbar = () => {
     };
 
     return (
-        <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
+        <nav className="navbar navbar-expand-lg" style={{ backgroundColor: '#2ecc71' }}>
             <div className="container">
-                <a className="navbar-brand" href="/">
-                    <img src="/logo.svg" alt="Logo" className="d-inline-block align-top" />
+                <a className="navbar-brand d-flex align-items-center gap-2 text-white" href="/">
+                    <div
+                        className="rounded-circle bg-white d-flex align-items-center justify-content-center"
+                        style={{ width: '30px', height: '30px' }}
+                    >
+                        <span className="text-success fw-bold">N</span>
+                    </div>
+                    <span className="fw-bold">NutriSmart</span>
                 </a>
 
                 <button
@@ -61,7 +67,9 @@ const Navbar = () => {
                         <li className="nav-item">
                             <NavLink
                                 to="/dashboard"
-                                className={({ isActive }) => `nav-link ${isActive ? 'fw-bold text-warning' : ''}`}
+                                className={({ isActive }) =>
+                                    `nav-link ${isActive ? 'fw-bold text-white' : 'text-black'}`
+                                }
                             >
                                 Dashboard
                             </NavLink>
@@ -69,15 +77,16 @@ const Navbar = () => {
                         <li className="nav-item">
                             <NavLink
                                 to="/profile"
-                                className={({ isActive }) => `nav-link ${isActive ? 'fw-bold text-warning' : ''}`}
+                                className={({ isActive }) =>
+                                    `nav-link ${isActive ? 'fw-bold text-white' : 'text-black'}`
+                                }
                             >
                                 Profile
                             </NavLink>
                         </li>
-                        {/* Tambahkan menu lain sesuai kebutuhan */}
                     </ul>
 
-                    <button className="btn btn-outline-warning" onClick={handleLogout}>
+                    <button className="btn btn-light text-success fw-semibold border border-success" onClick={handleLogout}>
                         Logout
                     </button>
                 </div>

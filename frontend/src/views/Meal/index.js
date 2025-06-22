@@ -320,6 +320,7 @@ const Meal = () => {
                     <div className="list-group">
                         <button
                             className={`list-group-item list-group-item-action ${selectedTab === 'view' ? 'active' : ''}`}
+                            style={selectedTab === 'view' ? { backgroundColor: '#2ecc71', color: 'white', borderColor: '#2ecc71' } : {}}
                             onClick={() => {
                                 setSelectedTab('view');
                                 if (saveMealPlan) {
@@ -333,6 +334,7 @@ const Meal = () => {
                         </button>
                         <button
                             className={`list-group-item list-group-item-action ${selectedTab === 'form' ? 'active' : ''}`}
+                            style={selectedTab === 'form' ? { backgroundColor: '#2ecc71', color: 'white', borderColor: '#2ecc71' } : {}}
                             onClick={() => {
                                 setSelectedTab('form');
                                 setMealPlan(null);
@@ -341,6 +343,7 @@ const Meal = () => {
                             {saveMealPlan ? 'Edit Meal Plan Anda' : 'Buat Meal Plan Baru'}
                         </button>
                     </div>
+
 
                     {saveMealPlan && (
                         <div className="mt-3">
@@ -360,7 +363,7 @@ const Meal = () => {
                                     mealPlan ? (
                                         saveMealPlan && isCurrentMealPlanSaved() ? (
                                             <button
-                                                className="btn btn-warning btn-sm"
+                                                className="btn btn-outline-success btn-sm"
                                                 onClick={() => {
                                                     setSelectedTab('form');
                                                     setMealPlan(null);
@@ -370,7 +373,8 @@ const Meal = () => {
                                             </button>
                                         ) : (
                                             <button
-                                                className="btn btn-primary btn-sm"
+                                                className="btn text-white btn-sm"
+                                                style={{ backgroundColor: '#2ecc71', border: 'none' }}
                                                 onClick={handleSaveMealPlan}
                                                 disabled={loading}
                                             >
@@ -382,7 +386,7 @@ const Meal = () => {
                             </div>
                             {loading && !mealPlan ? (
                                 <div className="text-center mt-5">
-                                    <div className="spinner-border text-primary" role="status">
+                                    <div className="spinner-border text-success" role="status">
                                         <span className="visually-hidden">Loading...</span>
                                     </div>
                                     <p>Memuat meal plan...</p>

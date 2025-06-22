@@ -265,24 +265,30 @@ const MealPlanForm = ({ onGenerate, loading, initialCalories, initialFormData })
             {renderStep()}
 
             <div className="d-flex justify-content-between mt-4">
-                <button className="btn btn-secondary" onClick={() => setStep((s) => Math.max(s - 1, 0))} disabled={step === 0}>
+                <button className="btn btn-outline-secondary" onClick={() => setStep((s) => Math.max(s - 1, 0))} disabled={step === 0}>
                     Kembali
                 </button>
 
                 {step < steps.length - 1 ? (
-                    <button className="btn btn-success" onClick={() => setStep((s) => Math.min(s + 1, steps.length - 1))}>
+                    <button
+                        className="btn text-white"
+                        style={{ backgroundColor: '#2ecc71', border: 'none' }}
+                        onClick={() => setStep((s) => Math.min(s + 1, steps.length - 1))}
+                    >
                         Lanjut
                     </button>
                 ) : (
                     <button
                         type="button"
-                        className="btn btn-primary"
+                        className="btn text-white"
+                        style={{ backgroundColor: '#ffa726', border: 'none' }}
                         onClick={() => setShowConfirm(true)}
                     >
                         Lihat Ringkasan
                     </button>
                 )}
             </div>
+
 
             <ConfirmationModal
                 show={showConfirm}

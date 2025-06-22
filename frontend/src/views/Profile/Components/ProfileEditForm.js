@@ -25,19 +25,23 @@ const ProfileEditForm = ({
     editMode, setEditMode,
     activityLevel, setActivityLevel,
     handleSubmit,
-    getProfile // Untuk tombol batal
+    getProfile
 }) => {
     return (
         <motion.div
-            className="card shadow-sm"
+            className="card shadow-sm border-0 rounded-4"
             initial="hidden"
             animate="visible"
             exit="exit"
             variants={formVariants}
         >
-            <div className="card-body p-4">
+            <div className="card-header bg-success text-white rounded-top-4 fw-semibold fs-5">
+                Formulir Profil Kesehatan
+            </div>
+            <div className="card-body p-4" style={{ backgroundColor: '#f6fffa' }}>
                 <form onSubmit={handleSubmit}>
-                    <h4 className="mb-3 text-muted">Informasi Dasar</h4>
+                    {/* Informasi Dasar */}
+                    <h5 className="mb-3 text-success">Informasi Dasar</h5>
                     <div className="form-floating mb-3">
                         <input
                             type="text"
@@ -65,10 +69,10 @@ const ProfileEditForm = ({
                     </div>
 
                     <div className="mb-3">
-                        <label htmlFor="gender" className="form-label">Jenis Kelamin</label>
+                        <label htmlFor="gender" className="form-label fw-semibold text-success">Jenis Kelamin</label>
                         <select
                             id="gender"
-                            className='form-select'
+                            className="form-select"
                             value={gender}
                             onChange={(e) => setGender(e.target.value)}
                             disabled={!editMode}
@@ -80,26 +84,25 @@ const ProfileEditForm = ({
                     </div>
 
                     <div className="mb-3">
-                        <label htmlFor="activityLevel" className="form-label">Tingkat Aktivitas</label>
+                        <label htmlFor="activityLevel" className="form-label fw-semibold text-success">Tingkat Aktivitas</label>
                         <select
                             id="activityLevel"
-                            className='form-select'
+                            className="form-select"
                             value={activityLevel}
                             onChange={(e) => setActivityLevel(e.target.value)}
                             disabled={!editMode}
                         >
                             <option value="" disabled>-- Pilih Tingkat Aktivitas --</option>
                             {activityLevelOptions.map((option, index) => (
-                                <option key={index} value={option.value}>
-                                    {option.label}
-                                </option>
+                                <option key={index} value={option.value}>{option.label}</option>
                             ))}
                         </select>
                     </div>
 
-                    <hr className="my-2" />
+                    <hr className="my-4" />
 
-                    <h4 className="mb-3 text-muted">Data Fisik</h4>
+                    {/* Data Fisik */}
+                    <h5 className="mb-3 text-success">Data Fisik</h5>
                     <div className="row">
                         <div className="col-md-4">
                             <div className="form-floating mb-3">
@@ -126,7 +129,7 @@ const ProfileEditForm = ({
                                     onChange={(e) => setWeight(e.target.value)}
                                     disabled={!editMode}
                                 />
-                                <label htmlFor="floatingWeight">Berat Badan (Kg)</label>
+                                <label htmlFor="floatingWeight">Berat (Kg)</label>
                             </div>
                         </div>
                         <div className="col-md-4">
@@ -140,21 +143,22 @@ const ProfileEditForm = ({
                                     onChange={(e) => setHeight(e.target.value)}
                                     disabled={!editMode}
                                 />
-                                <label htmlFor="floatingHeight">Tinggi Badan (cm)</label>
+                                <label htmlFor="floatingHeight">Tinggi (cm)</label>
                             </div>
                         </div>
                     </div>
 
+                    {/* Tombol Aksi */}
                     <div className="mt-4">
                         {!editMode ? (
                             <motion.button
                                 type="button"
-                                className="btn btn-primary w-100"
+                                className="btn btn-outline-success w-100"
                                 onClick={() => setEditMode(true)}
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                             >
-                                <i className="bi bi-pencil-square me-2"></i>Edit Data
+                                <i className="bi bi-pencil-square me-2"></i>Edit Profil
                             </motion.button>
                         ) : (
                             <div className="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -164,14 +168,14 @@ const ProfileEditForm = ({
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
                                 >
-                                    <i className="bi bi-check-circle me-2"></i>Simpan Perubahan
+                                    <i className="bi bi-check-circle me-2"></i>Simpan
                                 </motion.button>
                                 <motion.button
                                     type="button"
-                                    className="btn btn-secondary"
+                                    className="btn btn-outline-secondary"
                                     onClick={() => {
                                         setEditMode(false);
-                                        getProfile(); // Re-fetch profile to discard unsaved changes
+                                        getProfile();
                                     }}
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}

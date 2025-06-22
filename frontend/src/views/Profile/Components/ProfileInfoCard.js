@@ -13,7 +13,15 @@ const getGenderLabel = (code) => {
     return "-";
 };
 
-const ProfileInfoCard = ({ name, email, gender, age, weight, height, tddeInfo }) => {
+const activityLevelOptions = [
+    { value: "Tidak Aktif", label: "Tidak aktif/minim olahraga" },
+    { value: "Ringan", label: "Olahraga ringan 1-3 hari/minggu" },
+    { value: "Sedang", label: "Olahraga sedang 3-5 hari/minggu" },
+    { value: "Berat", label: "Olahraga berat 6-7 hari/minggu" },
+    { value: "Sangat Berat", label: "Pekerjaan fisik berat/olahraga intensif setiap hari" }
+];
+
+const ProfileInfoCard = ({ name, email, gender, age, weight, height, activityLevel, tddeInfo }) => {
     return (
         <motion.div
             initial="hidden"
@@ -21,74 +29,82 @@ const ProfileInfoCard = ({ name, email, gender, age, weight, height, tddeInfo })
             exit="exit"
             variants={cardVariants}
         >
-            <div className="card mb-3">
-                <div className="card-header">
+            {/* Informasi Dasar */}
+            <div className="card mb-4 shadow-sm border-0 rounded-4">
+                <div className="card-header bg-success text-white rounded-top-4 fw-semibold">
                     Informasi Dasar
                 </div>
                 <div className="card-body">
-                    <table>
+                    <table className="table table-borderless mb-0">
                         <tbody>
                             <tr>
                                 <th style={{ width: '35%' }}>Nama</th>
-                                <td style={{ width: '65%' }}>: {name || '-'}</td>
+                                <td>: {name || '-'}</td>
                             </tr>
                             <tr>
-                                <th style={{ width: '35%' }}>Email</th>
+                                <th>Email</th>
                                 <td>: {email || '-'}</td>
                             </tr>
                             <tr>
-                                <th style={{ width: '35%' }}>Jenis Kelamin</th>
+                                <th>Jenis Kelamin</th>
                                 <td>: {getGenderLabel(gender)}</td>
+                            </tr>
+                            <tr>
+                                <th>Aktivitas</th>
+                                <td>: {activityLevelOptions.find(option => option.value === activityLevel)?.label || '-'}</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <div className="card mb-3">
-                <div className="card-header">
+            {/* Data Fisik */}
+            <div className="card mb-4 shadow-sm border-0 rounded-4">
+                <div className="card-header bg-success text-white rounded-top-4 fw-semibold">
                     Data Fisik
                 </div>
-                <div className="card-body d-flex justify-content-between flex-wrap">
-                    <div className="p-2 border rounded shadow-sm m-2 flex-fill text-center">
-                        <h6>Umur</h6>
-                        <p className="fs-4">{age || '-'} Tahun</p>
+                <div className="card-body d-flex justify-content-between flex-wrap gap-3">
+                    <div className="flex-fill text-center p-3 border rounded-3 shadow-sm" style={{ backgroundColor: '#e9f7ef' }}>
+                        <h6 className="text-success mb-1">Umur</h6>
+                        <p className="fs-4 fw-bold">{age || '-'} Tahun</p>
                     </div>
-                    <div className="p-2 border rounded shadow-sm m-2 flex-fill text-center">
-                        <h6>Berat Badan</h6>
-                        <p className="fs-4">{weight || '-'} Kg</p>
+                    <div className="flex-fill text-center p-3 border rounded-3 shadow-sm" style={{ backgroundColor: '#e9f7ef' }}>
+                        <h6 className="text-success mb-1">Berat Badan</h6>
+                        <p className="fs-4 fw-bold">{weight || '-'} Kg</p>
                     </div>
-                    <div className="p-2 border rounded shadow-sm m-2 flex-fill text-center">
-                        <h6>Tinggi Badan</h6>
-                        <p className="fs-4">{height || '-'} cm</p>
+                    <div className="flex-fill text-center p-3 border rounded-3 shadow-sm" style={{ backgroundColor: '#e9f7ef' }}>
+                        <h6 className="text-success mb-1">Tinggi Badan</h6>
+                        <p className="fs-4 fw-bold">{height || '-'} cm</p>
                     </div>
                 </div>
             </div>
 
-            {/* Card Analisis Kebutuhan Kalori */}
-            <div className="card mb-3 shadow-sm">
-                <div className="card-header bg-light">
+            {/* Analisis Kalori */}
+            <div className="card mb-4 shadow-sm border-0 rounded-4">
+                <div className="card-header bg-success text-white rounded-top-4 fw-semibold">
                     Analisis Kebutuhan Kalori
                 </div>
                 <div className="card-body">
-                    {tddeInfo && tddeInfo.amb && tddeInfo.tdd ? ( // Periksa apakah data ada
-                        <table className="table table-borderless table-sm mb-0">
+                    {tddeInfo && tddeInfo.amb && tddeInfo.tdd ? (
+                        <table className="table table-borderless mb-0">
                             <tbody>
                                 <tr>
-                                    <th style={{ width: '35%' }}>Angka Metabolisme Basal (AMB)</th>
-                                    <td>: {tddeInfo.amb?.toFixed(2) || '-'} {tddeInfo.unit || 'kcal/hari'}</td>
+                                    <th style={{ width: '35%' }}>AMB (Metabolisme Basal)</th>
+                                    <td>: {tddeInfo.amb?.toFixed(2)} {tddeInfo.unit || 'kcal/hari'}</td>
                                 </tr>
                                 <tr>
-                                    <th style={{ width: '35%' }}>Total Kebutuhan Energi (TDDE)</th>
-                                    <td>: {tddeInfo.tdd?.toFixed(2) || '-'} {tddeInfo.unit || 'kcal/hari'}</td>
+                                    <th>TDDE (Kebutuhan Energi Total)</th>
+                                    <td>: {tddeInfo.tdd?.toFixed(2)} {tddeInfo.unit || 'kcal/hari'}</td>
                                 </tr>
                             </tbody>
                         </table>
                     ) : (
-                        <p className="text-muted fst-italic">
-                            {age && weight && height && gender ?
-                                'Sedang memuat data analisis kalori atau data tidak tersedia...' :
-                                'Lengkapi data fisik dan tingkat aktivitas pada menu "Edit Profil" untuk melihat analisis kebutuhan kalori Anda.'}
+                        <p className="text-muted fst-italic mb-0">
+                            {age && weight && height && gender ? (
+                                'Sedang memuat data analisis kalori atau data tidak tersedia...'
+                            ) : (
+                                'Lengkapi data fisik dan aktivitas di "Edit Profil" untuk melihat analisis kalori Anda.'
+                            )}
                         </p>
                     )}
                 </div>
